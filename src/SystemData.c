@@ -119,6 +119,14 @@ void portsLoad(BinaryTree *stationTree, BinaryTree *carTree) {
     PortStatus status = (PortStatus) statusInt;
     PortType type = parsePortType(portTypeString);
 
+    Car *car =NULL;
+    if(strcmp(license,"-1")!=0) {
+      car = searchCar(&carTree,license);
+
+      if(!car) {
+        fprintf(stderr,"Warning: Car with license '%s' not found.\n");
+      }
+    }
   }
   
 }
