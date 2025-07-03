@@ -1,9 +1,16 @@
 #include "../headers/Station.h"
 #include "../headers/Queue.h"
 #include "../headers/Port.h"
+#include "BinaryTree.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <float.h>
+#include <math.h>
+
+Station *searchById(BinaryTree *tree, SearchKey *key);
+Station *searchByName(BinaryTree *tree, SearchKey *key);
+Station *searchByDistance(BinaryTree *tree, SearchKey *key);
 
 Station *StationCreate(unsigned int id, const char *name, int nPorts, Coord coord)
 {
@@ -107,6 +114,7 @@ Station *insertStation(Station *root, Station *newStation)
   }
   return root;
 }
+
 void inorderStationTraversal(Station *root)
 {
   if (root == NULL)
@@ -115,6 +123,7 @@ void inorderStationTraversal(Station *root)
   printStation(root);
   inorderStationTraversal(root->right);
 }
+
 void destroyStationTree(Station *root)
 {
   if (root == NULL)
@@ -143,4 +152,120 @@ void *parseStationLine(const char *line)
   Station *station = StationCreate(id, name, nPorts, coord);
   // printf("[Parse4] Station created\n");
   return station;
+}
+
+// search station
+static SearchFunc searchFunctions[SEARCH_TYPE_COUNT] = {
+    searchById,
+    searchByName,
+    searchByDistance};
+
+Station *searchStation(BinaryTree *tree, SearchKey *key, SearchType type)
+{
+  if (!tree || !key)
+    return NULL;
+  if (type < 0 || type >= SEARCH_TYPE_COUNT)
+    return NULL;
+  return searchFunctions[type](tree, key);
+}
+
+typedef struct
+{
+  Station *closest;
+  double minDistance;
+  double userX;
+  double userY;
+} DistanceSearchHelper;
+
+Station *searchByNameHelper(TreeNode *node, const char *name)
+{
+  if (node == NULL)
+    return NULL;
+  Station *station = (Station *)node->data;
+
+  printf("[DEBUG] Checking Station Name: %s vs Search Name: %s\n", station->name, name);
+
+  // search correct node
+  if (strcmp(station->name, name) == 0)
+    return station;
+
+  // search lef
+  Station *found = searchByNameHelper(node->left, name);
+  if (found)
+    return found;
+
+  // search right
+  return searchByNameHelper(node->right, name);
+}
+
+Station *searchByName(BinaryTree *tree, SearchKey *key)
+{
+  if (!tree || !key)
+    return NULL;
+  return searchByNameHelper(tree->root, key->name);
+}
+
+Station *findStationById(TreeNode *node, int id)
+{
+  if (node == NULL)
+    return NULL;
+
+  Station *station = (Station *)node->data;
+  printf("[DEBUG] Checking Station ID: %u vs Search ID: %d\n", station->id, id);
+
+  if (station->id == id)
+  {
+    printf("[DEBUG] Found matching ID: %u\n", station->id);
+    return station;
+  }
+  else if (id < station->id)
+  {
+    return findStationById(node->left, id);
+  }
+  else
+  {
+    return findStationById(node->right, id);
+  }
+}
+
+Station *searchById(BinaryTree *tree, SearchKey *key)
+{
+  if (!tree || !key)
+    return NULL;
+  return findStationById(tree->root, key->id);
+}
+
+void searchByDistanceHelper(TreeNode *node, DistanceSearchHelper *helper)
+{
+  if (node == NULL)
+    return;
+  Station *station = (Station *)node->data;
+
+  double dx = station->coord.x - helper->userX;
+  double dy = station->coord.y - helper->userY;
+  double distance = sqrt(dx * dx + dy * dy);
+
+  if (distance < helper->minDistance)
+  {
+    helper->minDistance = distance;
+    helper->closest = station;
+  }
+
+  searchByDistanceHelper(node->left, helper);
+  searchByDistanceHelper(node->right, helper);
+}
+
+Station *searchByDistance(BinaryTree *tree, SearchKey *key)
+{
+  if (!tree)
+    return NULL;
+
+  DistanceSearchHelper helper = {
+      .closest = NULL,
+      .minDistance = DBL_MAX,
+      .userX = key->location.userX,
+      .userY = key->location.userY};
+
+  searchByDistanceHelper(tree->root, &helper);
+  return helper.closest;
 }

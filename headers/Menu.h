@@ -12,7 +12,7 @@ typedef struct menu
 MenuSystem initMenu(SystemData *sys);
 
 // main menu
-void mainMenu(MenuSystem *menu);
+void mainMenu(SystemData *menu);
 // clean menu
 void destroyMenu(MenuSystem *menu);
 

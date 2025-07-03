@@ -131,3 +131,16 @@ BinaryTree initTree(CompareFunc cmp,PrintFunc print,FreeFunc destroy) {
   tree.destroy = destroy;
   return tree;
 }
+
+
+static void inorderNode(TreeNode *node, void (*printFunc)(const void *)) {
+    if (!node) return;
+    inorderNode(node->left, printFunc);
+    printFunc(node->data);
+    inorderNode(node->right, printFunc);
+}
+
+void inorderBST(BinaryTree *tree, void (*printFunc)(const void *)) {
+    if (!tree || !printFunc) return;
+    inorderNode(tree->root, printFunc);
+}

@@ -45,5 +45,6 @@ void destroyTree(TreeNode *root, FreeFunc destroy);
 
 // inorder Traversal
 void inorderTraversal(TreeNode *root, PrintFunc print);
+void inorderBST(BinaryTree *tree, void (*printFunc)(const void *));
 
 #endif // BINARYTREE_H
