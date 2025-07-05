@@ -20,6 +20,10 @@ void destroyMenu(MenuSystem *menu);
 void locateNearSt(const BinaryTree *stationTree);
 // 2: Charge Car
 void chargeCar(BinaryTree *stationTree, BinaryTree *carTree);
+// 3: Check Car Status
+void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree);
+// 4: Stop Charge
+void stopCharge(BinaryTree* stationTree,BinaryTree* carTree);
 
 // TEST OPTIONS
 void displaySystemStatus(const BinaryTree *stationTree, const BinaryTree *carTree);

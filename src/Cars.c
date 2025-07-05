@@ -35,7 +35,7 @@ Car* parseCarLine(const char* line)
   }
   // PortType
   token = strtok(NULL,",");
-  car->portType = parsePortType(token);
+  car->portType = Util_parsePortType(token);
   
   // TotalPayed
   token = strtok(NULL,",");
@@ -113,5 +113,5 @@ Car* searchCar(BinaryTree *carTree,const char *lisence) {
 }
 
 BOOL isLicenseValid(const char* license) {
-  return(strlen(license) == 8 || strspn(license,"0123456789")==8);
+  return(strlen(license) == 8 && strspn(license,"0123456789")==8);
 }

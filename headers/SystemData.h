@@ -11,6 +11,13 @@ typedef struct
   BinaryTree stationTree; //  stations binary tree
 } SystemData;
 
+typedef struct LineOfCarsEntry
+{
+  unsigned int stationId;
+  char license[LICENSE_SIZE];
+} LineOfCarsEntry;
+
+
 // Functions
 // load files
 SystemData *loadFiles();
@@ -21,6 +28,7 @@ void destroyFiles(SystemData *sys);
 int loadStations(BinaryTree *stationTree);
 int loadCars(BinaryTree *carTree);
 int loadPorts(SystemData *sys);
+int loadLineOfCars(SystemData *sys);
 
-void loadLineOfCars(SystemData *sys);
+
 #endif

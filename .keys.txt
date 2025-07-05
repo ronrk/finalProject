@@ -1,0 +1,6 @@
+Hello im working on final project on c programing to the university.. 
+I want to send you descriptions of the project in some "readme" file.
+than I want us to go through the project file after file, you'll read the file get a good understanding of  flow chart, data flow, function logically. read the file well make a good logic flow of all the functions in the app and how they work.
+I want us to deal with some issues I have, the main thing I feel the program becomes to complicated, I feel there is some extra unnecessary functions that can convert into one smarter function. like I have a low of functions that named parser or something with parser, which I don't fully understand why I need all of them , and maybe split them into much more clearer functions. and I feel like the CRUD for every Data structure are not flow very fluid and I want us to deal that types of issues to. the code became to long for me.
+
+after you will read the readme, you will guide me every time which file you want to get best understanding  of the app. and don't jump to assumptions early on, because bugs that you see on one function might be already handle in another function (which is confusing to maybe we need to change logic to some functions)

@@ -1,6 +1,7 @@
 #include "../headers/Station.h"
 #include "../headers/Queue.h"
 #include "../headers/Port.h"
+#include "Cars.h"
 #include "BinaryTree.h"
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,7 @@ Station *StationCreate(unsigned int id, const char *name, int nPorts, Coord coor
     free(s);
     return NULL;
   }
-  // printf("[Create6] Creating queue\n");
+
   s->id = id;
   s->nPorts = nPorts;
   s->coord = coord;
@@ -50,7 +51,6 @@ Station *StationCreate(unsigned int id, const char *name, int nPorts, Coord coor
   s->left = NULL;
   s->right = NULL;
 
-  // printf("[Create8] Station created successfully\n");
   return s;
 }
 
@@ -122,7 +122,7 @@ void printStation(const void *data)
   printf("Station ID: %u  |  Name: %s |  Ports: %d  |  Cars: %d\n", station->id, station->name, station->nPorts, station->nCars);
 }
 
-void *parseStationLine(const char *line)
+void *Station_parseLine(const char *line)
 {
 
   unsigned int id;
@@ -173,7 +173,7 @@ Station *searchByNameHelper(TreeNode *node, const char *name)
   Station *station = (Station *)node->data;
 
   // search correct node
-  if (strcmp(station->name, name) == 0)
+  if (strcasestr(station->name, name) != NULL)
     return station;
 
   // search lef
@@ -274,4 +274,42 @@ Station *searchByDistance(BinaryTree *tree, SearchKey *key)
 
   searchByDistanceHelper(tree->root, &helper);
   return helper.closest;
+}
+
+static Car *searchInQueueHelper(const TreeNode *node, const char *license)
+{
+  if (!node)
+    return NULL;
+
+  Station *station = (Station *)node->data;
+  CarNode *current = station->qCar->front;
+
+  while (current)
+  {
+    if (strcmp(current->data->nLicense, license) == 0)
+    {
+      return current->data;
+    }
+    current = current->next;
+  }
+
+  // search left
+  Car *found = searchInQueueHelper(node->left, license);
+  if (found)
+    return found;
+  return searchInQueueHelper(node->right, license);
+}
+
+Car *searchCarInAllQueues(const BinaryTree *stationTree, const char *license)
+{
+  if (!stationTree || !license)
+    return NULL;
+  return searchInQueueHelper(stationTree->root, license);
+}
+
+BOOL enqueueCarToStationQueue(Station *station, Car *car)
+{
+  if (!station || !car)
+    return FALSE;
+  return enqueue(station->qCar, car);
 }

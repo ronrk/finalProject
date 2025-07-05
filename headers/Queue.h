@@ -1,5 +1,6 @@
 #ifndef QUEUE_H
 #define QUEUE_H
+#include "Port.h"
 typedef struct Car Car;
 
 typedef struct CarNode
@@ -20,8 +21,10 @@ qCar *createQueue();
 void destroyQueue(qCar *queue);
 
 int isEmpty(const qCar *queue);
-int enqueue(qCar *queue, Car *car);
+BOOL enqueue(qCar *queue, Car *car);
 Car *dequeue(qCar *queue);
+
+Car* dequeueByPortType(qCar* queue,PortType portType);
 
 Car *getFront(const qCar *queue);
 void printQueue(const qCar *queue);

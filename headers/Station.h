@@ -1,7 +1,6 @@
 #ifndef STATION_H
 #define STATION_H
 
-
 #include "Utilis.h"
 #include "Queue.h"
 #include "Port.h"
@@ -30,11 +29,14 @@ int compareStation(const void *a, const void *b);
 void printStation(const void *data);
 void printFullStation(const void *data);
 
-void *parseStationLine(const char *line);
+void *Station_parseLine(const char *line);
 
 unsigned int generateUniqueStationId(BinaryTree *tree);
 
+BOOL enqueueCarToStationQueue(Station *station, Car *car);
+
 // search
 Station *searchStation(BinaryTree *tree, SearchKey *key, SearchType type);
+Car *searchCarInAllQueues(const BinaryTree *stationTree, const char *license);
 
 #endif

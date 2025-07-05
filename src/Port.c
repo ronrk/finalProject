@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 Port *createPort(unsigned int stationId,unsigned int num, PortType type,PortStatus status,Car* car,Date t,const char* license) {
   Port* newPort = malloc(sizeof(Port));
   if(!newPort) {
@@ -56,11 +57,14 @@ Port *findPort(Port *head, unsigned int num){
 }
 
 Port* findAvailablePort(Port* portList, PortType type) {
+  printf("[DEBUG] Scanning port list for type: %s\n", portTypeToStr(type));
   Port* current = portList;
 
   while (current)
   {
       if(current->status == FREE && isCompatiblePortType(type,current->portType)) {
+        printf("[DEBUG] Found matching port: #%u (Status: %s)\n",
+       current->num, statusToStr(current->status));
         return current;
       }
       current = current->next;
@@ -176,6 +180,6 @@ int countFreePorts(const Port* head) {
 
 BOOL isPortTypeValid(const char* pTypeKey) {
   return (
-    parsePortType(pTypeKey) != -1
+    Util_parsePortType(pTypeKey) != -1
   );
 }

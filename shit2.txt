@@ -1,6 +1,6 @@
 
 headers:
-  BinaryTree.h:
+  [BinaryTree.h]:
 
 
 
@@ -58,7 +58,7 @@ void inorderBST(BinaryTree *tree, void (*printFunc)(const void *));
 
 
 
-  Cars.h:
+  [Cars.h]:
 
 
 
@@ -104,7 +104,14 @@ BOOL isLicenseValid(const char* license);
 
 
 
-  Menu.h:
+  [Menu.h]:
+
+
+#ifndef MENU_H
+#define MENU_H
+
+#include "SystemData.h"
+
 
 
 #ifndef MENU_H
@@ -129,6 +136,10 @@ void destroyMenu(MenuSystem *menu);
 void locateNearSt(const BinaryTree *stationTree);
 // 2: Charge Car
 void chargeCar(BinaryTree *stationTree, BinaryTree *carTree);
+// 3: Check Car Status
+void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree);
+// 4: Stop Charge
+void stopCharge(BinaryTree* stationTree,BinaryTree* carTree);
 
 // TEST OPTIONS
 void displaySystemStatus(const BinaryTree *stationTree, const BinaryTree *carTree);
@@ -137,7 +148,7 @@ void createStationInteractive(BinaryTree* stationTree);
 
 
 
-  Port.h:
+  [Port.h]:
 
 
 
@@ -196,12 +207,13 @@ BOOL isPortTypeValid(const char* pTypeKey);
 
 
 
-  Queue.h:
+  [Queue.h]:
 
 
 
 #ifndef QUEUE_H
 #define QUEUE_H
+#include "Port.h"
 typedef struct Car Car;
 
 typedef struct CarNode
@@ -225,6 +237,8 @@ int isEmpty(const qCar *queue);
 int enqueue(qCar *queue, Car *car);
 Car *dequeue(qCar *queue);
 
+Car* dequeueByPortType(qCar* queue,PortType portType);
+
 Car *getFront(const qCar *queue);
 void printQueue(const qCar *queue);
 
@@ -234,13 +248,18 @@ int countQueueItems(const qCar* queue);
 
 
 
-  Station.h:
+
+  [Station.h]:
 
 
 
 #ifndef STATION_H
 #define STATION_H
 
+
+
+#ifndef STATION_H
+#define STATION_H
 
 #include "Utilis.h"
 #include "Queue.h"
@@ -276,14 +295,19 @@ unsigned int generateUniqueStationId(BinaryTree *tree);
 
 // search
 Station *searchStation(BinaryTree *tree, SearchKey *key, SearchType type);
+Car *searchCarInAllQueues(const BinaryTree *stationTree, const char *license);
 
 #endif
 
 
 
 
-  SystemData.h:
+  [SystemData.h]:
 
+
+
+#ifndef SYSTEMDATA_H
+#define SYSTEMDATA_H
 
 
 #ifndef SYSTEMDATA_H
@@ -315,16 +339,20 @@ void loadLineOfCars(SystemData *sys);
 
 
 
-  Utilis.h:
+  [Utilis.h]:
+
+
 
 #ifndef UTILIS_H
 #define UTILIS_H
 
+#define LICENSE_SIZE 9
 #define MAX_NAME 100
+#define RATE_CHARGE 1.2
 
 #include "BinaryTree.h"
 #include <stdio.h>
-
+#include <time.h>
 
 typedef enum
 {
@@ -339,7 +367,7 @@ typedef struct
   SearchType type;
   union
   {
-    char *name;
+    char name[MAX_NAME];
     int id;
   };
   struct
@@ -406,6 +434,9 @@ typedef struct
 
 // functions
 
+Date getCurrentDate();
+int diffInMin(Date start,Date end);
+
 // clear input buffer avoid new line
 void clearInputBuffer();
 // remove new line
@@ -414,9 +445,8 @@ void removeTrailingNewline(char *str);
 BOOL isCancelInput(const char *str);
 
 // get and validate coords
-BOOL getCoordFromUser(Coord *coord, const char* promptX, const char* promptY);
-BOOL getDoubleFromUser(double* outValue,const char* prompt);
-
+BOOL getCoordFromUser(Coord *coord, const char *promptX, const char *promptY);
+BOOL getDoubleFromUser(double *outValue, const char *prompt);
 
 // handle enumstoStr and opposite
 const char *portTypeToStr(PortType type);
@@ -427,14 +457,14 @@ PortStatus parsePortStatus(const char *str);
 // calculate distance
 double calculateDistance(Coord c1, Coord c2);
 
-int strEqualsIgnoreCase(const char* a, const char* b);
+int strEqualsIgnoreCase(const char *a, const char *b);
 
-BOOL isNumericString(const char* str);
+BOOL isNumericString(const char *str);
 
-BOOL getLineFromUser(char* buffer,size_t size);
+BOOL getLineFromUser(char *buffer, size_t size);
 
-BOOL getInputAndCancel(char* buffer, size_t size, const char* prompt);
+BOOL getInputAndCancel(char *buffer, size_t size, const char *prompt);
 
-BOOL parseStationInput(const char* input,SearchKey* key,SearchType *outType);
+BOOL parseStationInput(const char *input, SearchKey *key, SearchType *outType);
 
 #endif // UTILIS_H

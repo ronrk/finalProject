@@ -3,6 +3,7 @@
 #include "../headers/Cars.h"
 #include "../headers/Station.h"
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +36,7 @@ SystemData* loadFiles(){
 }
 
 void* stationParser(const char* line) {
-  return parseStationLine(line);
+  return Station_parseLine(line);
 }
 
 void* carsParser(const char* line){
@@ -45,7 +46,7 @@ void* carsParser(const char* line){
 void* portParser(const char*line) {
   // parse port line
   unsigned int stationId,portNum;
-  char typeStr[10],license[9];
+  char typeStr[10],license[LICENSE_SIZE];
   int status,y,m,d,h,min;
 
   if(sscanf(line,"%u,%u,%9[^,],%d,%d,%d,%d,%d,%d,%8s",
@@ -57,14 +58,52 @@ void* portParser(const char*line) {
         return NULL;
       }
 
-      PortType parsedType = parsePortType(typeStr);
+      PortType parsedType = Util_parsePortType(typeStr);
   if (parsedType == -1) {
     fprintf(stderr, "[portParser] Invalid port type in line: %s\n", line);
     return NULL;
   }
 
-  return createPort(stationId,portNum,parsePortType(typeStr),(PortStatus)status,NULL,
+  return createPort(stationId,portNum,Util_parsePortType(typeStr),(PortStatus)status,NULL,
                     (Date){y,m,d,h,min},license);
+}
+
+void* lineOfCarParser(const char* line){
+  if(!line) return NULL;
+  LineOfCarsEntry* entry = malloc(sizeof(LineOfCarsEntry));
+  if(!entry) return NULL;
+
+  if(sscanf(line,"%u,%8s",&entry->stationId,entry->license) != 2) {
+    free(entry);
+    return NULL;
+  }
+  return entry;
+}
+
+void lineOfCarsProcessor(void* obj,void* context){
+  if(!obj||!context) return;
+
+  LineOfCarsEntry* entry = (LineOfCarsEntry* )obj;
+  SystemData* sys = (SystemData*) context;
+
+  Station searchKey = {.id = entry->stationId};
+  Station * station = searchBST(&sys->stationTree,&searchKey);
+  if (!station) {
+        fprintf(stderr, "Station %u not found for line of cars entry\n", entry->stationId);
+        return;
+    }
+  Car* car = searchCar(&sys->carTree, entry->license);
+    if (!car) {
+        fprintf(stderr, "Car %s not found for line of cars entry\n", entry->license);
+        return;
+    }
+    if (!enqueueCarToStationQueue(station, car)) {
+        fprintf(stderr, "Failed to enqueue car %s to station %u queue\n", entry->license, entry->stationId);
+    }
+}
+
+void destroyLineOfCars(void* obj){
+  free(obj);
 }
 
 // processor to link port to station
@@ -148,23 +187,18 @@ int loadPorts(SystemData *sys){
   return loadDataFile(&config);
 }
 
-void loadLineOfCars(SystemData *sys) {
-  
-  // Minimal implementation - just show we're loading
-  FILE* file = fopen("data/LineOfCars.txt", "r");
-  if(!file) {
-    perror("Error opening LineOfCars.txt");
-    return;
-  }
-  
-  char line[256];
-  // Skip header
-  fgets(line, sizeof(line), file);
-  
-  while(fgets(line, sizeof(line), file)) {
-    line[strcspn(line, "\r\n")] = '\0';
-  }
-  
-  fclose(file);
+int loadLineOfCars(SystemData *sys) {
+  if(!sys) return 0;
+  FileLoaderConfig config = {
+    .filename = "data/LineOfCars.txt",
+    .targetTree = NULL,
+    .parser = lineOfCarParser,
+    .processor = lineOfCarsProcessor,
+    .context = sys,
+    .destroyObject = destroyLineOfCars,
+    .skipHeader = 1
+  }; 
+
+  return loadDataFile(&config);
 }
 

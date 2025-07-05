@@ -18,6 +18,7 @@ typedef struct Port
 } Port;
 
 // functions
+
 // crate new port
 Port *createPort(unsigned int stationId, unsigned int num, PortType type, PortStatus status, Car *car, Date t, const char *license);
 

@@ -3,13 +3,34 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+static Car* removeNode(qCar* queue,CarNode *prev, CarNode *toRemove){
+  if(!queue||!toRemove) return NULL;
+
+  if(prev ==NULL) {
+    // remove front
+    queue->front = toRemove->next;
+    if(queue->front == NULL) {
+      queue->rear = NULL;
+    }
+  } else {
+    prev->next = toRemove->next;
+    if(toRemove == queue->rear) {
+      queue->rear = prev;
+    }
+  }
+
+  Car *car = toRemove->data;
+  free(toRemove);
+  return car;
+}
+
 void initQueue(qCar*queue) 
 {
   queue->front = NULL;
   queue->rear = NULL;
 }
 
-qCar *createQueue(){
+qCar *createQueue() {
   qCar *queue = malloc(sizeof(qCar));
   if(!queue) {
     perror("Failed to allocate memory for queue");
@@ -36,12 +57,12 @@ int isEmpty(const qCar *queue)
   return(queue->front == NULL);
 }
 
-int enqueue(qCar *queue, Car *car) 
+BOOL enqueue(qCar *queue, Car *car) 
 {
   CarNode *newNode = malloc(sizeof(CarNode));
   if(!newNode) {
     perror("Failed to allocate memory for QueueNode");
-    return 0; // FAILED
+    return FALSE; // FAILED
   }
   newNode->data = car;
   newNode->next = NULL;
@@ -53,24 +74,35 @@ int enqueue(qCar *queue, Car *car)
     queue->rear->next = newNode;
     queue->rear = newNode;
   }
-  return 1; //SUCCESS
+  return TRUE; //SUCCESS
 }
 
+
+  
+
 Car *dequeue(qCar *queue) {
-  if(queue->front == NULL) {
-    // empty queue
+  if(isEmpty(queue)) return NULL;
+  return removeNode(queue,NULL,queue->front);
+}
+
+Car* dequeueByPortType(qCar* queue,PortType portType){
+  if(!queue||isEmpty(queue)) {
     return NULL;
   }
-  CarNode *temp = queue->front;
-  Car *car = temp->data;
-  queue->front = queue->front->next;
 
-  if(queue->front == NULL){
-    // queue empty
-    queue->rear = NULL;
+  CarNode* current = queue->front;
+  CarNode *prev = NULL;
+
+  while (current)
+  {
+    if(current->data&&current->data->portType == portType) {
+      return removeNode(queue,prev,current);
+    }
+
+    prev = current;
+    current = current->next;
   }
-  free(temp);
-  return car;
+  return NULL;
 }
 
 void printQueue(const qCar *queue) {

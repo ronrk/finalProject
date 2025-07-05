@@ -7,6 +7,52 @@
 
 
 
+Date getCurrentDate() {
+  time_t now = time(NULL);
+  struct tm *tm_now = localtime(&now);
+
+  Date date;
+  date.year = tm_now->tm_year + 1900;
+  date.month = tm_now->tm_mon + 1;
+  date.day = tm_now->tm_mday;
+  date.hour = tm_now->tm_hour;
+  date.min = tm_now->tm_min;
+
+  return date;
+}
+
+int diffInMin(Date start,Date end) {
+  struct tm tm_start = {0};
+  tm_start.tm_year = start.year - 1900;
+  tm_start.tm_mon = start.month - 1;
+  tm_start.tm_mday = start.day;
+  tm_start.tm_hour = start.hour;
+  tm_start.tm_min = start.min;
+
+  struct tm tm_end = {0};
+  tm_end.tm_year = end.year - 1900;
+  tm_end.tm_mon = end.month - 1;
+  tm_end.tm_mday = end.day;
+  tm_end.tm_hour = end.hour;
+  tm_end.tm_min = end.min;
+
+  time_t time_start = mktime(&tm_start);
+  time_t time_end = mktime(&tm_end);
+
+  if (time_start == (time_t)(-1) || time_end == (time_t)(-1)) {
+        // Invalid time conversion
+      return 0;
+  }
+
+  double diff_seconds = difftime(time_end, time_start);
+
+  if (diff_seconds < 0) return 0;
+
+  int diff_minutes = (int)(diff_seconds / 60);
+
+  return diff_minutes;
+}
+
 int strEqualsIgnoreCase(const char* a, const char* b){
   while(*a&&*b) {
     char ca = *a;
@@ -51,12 +97,10 @@ BOOL getDoubleFromUser(double* outValue,const char* prompt) {
 BOOL getCoordFromUser(Coord *coord, const char* promptX, const char* promptY){
   if(!coord) return FALSE;
 
-  printf("%s",promptX);
   if(!getDoubleFromUser(&coord->x,promptX)) {
     return FALSE;
   }
 
-  printf("%s",promptY);
   if(!getDoubleFromUser(&coord->y,promptY)) {
     return FALSE;
   }
@@ -148,15 +192,14 @@ const char* portTypeToStr(PortType type) {
   }
 }
 
-PortType parsePortType (const char* str) { 
-// ////////DEBUG
+PortType Util_parsePortType (const char* str) { 
   if(!str) return SLOW;
   if(strEqualsIgnoreCase(str,"Fast")) return FAST;
   if(strEqualsIgnoreCase(str,"Slow")) return SLOW;
   if(strEqualsIgnoreCase(str,"Mid")) return MID;
 
   // if invalid
-  fprintf(stderr,"Unknowkn port type: '%s'\n",str);
+  fprintf(stderr,"Unknown port type: '%s'\n",str);
 
   return -1;
 }
@@ -172,7 +215,7 @@ const char* statusToStr(PortStatus status) {
   }
 }
 
-PortStatus parsePortStatus (const char* str) { 
+PortStatus Util_parsePortStatus (const char* str) { 
 
   if(!str) return FREE;
 
@@ -197,6 +240,7 @@ void clearInputBuffer() {
 void removeTrailingNewline(char *str){
   if(!str) return;
   size_t len = strlen(str);
+  
   if(len > 0 && str[len-1] == '\n')
     str[len - 1] = '\0';
 }
@@ -208,13 +252,25 @@ BOOL getInputAndCancel(char* buffer, size_t size, const char* prompt) {
 }
 
 BOOL getLineFromUser(char* buffer,size_t size){
+
   if (!fgets(buffer, size, stdin)) {
+    clearInputBuffer();
       printf("Input error.\n");
       return FALSE;
       }
 
+size_t len = strlen(buffer);
+  if (len > 0 && buffer[len - 1] != '\n') {
+    clearInputBuffer();
+  }
+
   removeTrailingNewline(buffer);
-  
+
+
+  if (buffer[0] == '\0') {
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -246,3 +302,4 @@ BOOL isNumericString(const char* str) {
   }
   return TRUE;
 }
+

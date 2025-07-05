@@ -1,10 +1,13 @@
 #ifndef UTILIS_H
 #define UTILIS_H
 
+#define LICENSE_SIZE 9
 #define MAX_NAME 100
+#define RATE_CHARGE 1.2
 
 #include "BinaryTree.h"
 #include <stdio.h>
+#include <time.h>
 
 typedef enum
 {
@@ -86,6 +89,9 @@ typedef struct
 
 // functions
 
+Date getCurrentDate();
+int diffInMin(Date start,Date end);
+
 // clear input buffer avoid new line
 void clearInputBuffer();
 // remove new line
@@ -99,9 +105,9 @@ BOOL getDoubleFromUser(double *outValue, const char *prompt);
 
 // handle enumstoStr and opposite
 const char *portTypeToStr(PortType type);
-PortType parsePortType(const char *str);
+PortType Util_parsePortType (const char* str);
 const char *statusToStr(PortStatus status);
-PortStatus parsePortStatus(const char *str);
+PortStatus Util_parsePortStatus(const char *str);
 
 // calculate distance
 double calculateDistance(Coord c1, Coord c2);

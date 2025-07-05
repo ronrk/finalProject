@@ -7,7 +7,7 @@
 
 typedef struct Car
 {
-  char nLicense[9];
+  char nLicense[LICENSE_SIZE];
   PortType portType;
   double totalPayed;
   Port* pPort;
