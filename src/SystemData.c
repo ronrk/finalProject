@@ -332,3 +332,8 @@ int loadLineOfCars(SystemData *sys) {
   return fileLoader(&config);
 }
 
+// update files
+SystemData *updateFiles(){
+
+  return NULL;
+}

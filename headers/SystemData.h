@@ -53,8 +53,7 @@ int loadLineOfCars(SystemData *sys);
 
 void* stationParser(const char* line);
 
+// update files
+SystemData *updateFiles();
 
-
-
-void runSystemTests(SystemData *sys);
 #endif

@@ -60,4 +60,6 @@ BOOL isPortTypeValid(const char *pTypeKey);
 // find available port
 // Port *findAvailablePort(Port *portList, PortType type);
 
+// get next available port num at station
+int getNextPortNum(Station* station);
 #endif

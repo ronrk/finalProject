@@ -15,13 +15,9 @@ struct MenuSystem
   SystemData *sys;
 };
 
-// init main menu
-MenuSystem initMenu(SystemData *sys);
 
 // main menu
 void mainMenu(SystemData *menu);
-// clean menu
-void destroyMenu(MenuSystem *menu);
 
 // 1: Locate nearest station
 void locateNearSt(const BinaryTree *stationTree);
@@ -54,7 +50,21 @@ void displayChargingCars(const Station* station);
 // 7. Report of statistis, station
 void reportStStat(const BinaryTree* stationTree);
 
-// TEST OPTIONS
-void displaySystemStatus(const BinaryTree *stationTree, const BinaryTree *carTree);
-void createStationInteractive(BinaryTree* stationTree);
+// 8.Display top customers
+void dispTopCustomers(const BinaryTree *carTree);
+
+// 9.Add new port
+void addNewPort(BinaryTree* stationTree);
+
+// 10.Realease Charging Ports
+void releasePorts(BinaryTree* stationTree);
+
+// 11.Remove Out Of Order Ports
+void removeOutOrderPort(BinaryTree* stationTree);
+
+// 12.Remove Customer
+void remCustomer(BinaryTree* carTree);
+
+// 13.Close Station
+void closeSt(BinaryTree* stationTree);
 #endif

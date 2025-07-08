@@ -10,13 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int compareCarsByLicense(const void* a, const void*b){
-  const Car *c1 = (const Car*)a;
-  const Car *c2 = (const Car*)b;
-
-  return strcmp(c1->nLicense,c2->nLicense);
-}
-
+// static functions
 static char* getNextToken(char* context,const char* fieldName){
   char *token = strtok(NULL, ",");
   if(!token && fieldName) {
@@ -25,6 +19,22 @@ static char* getNextToken(char* context,const char* fieldName){
     displayError(ERR_PARSING, msg);
   }
   return token;
+}
+
+// public functions
+Car *createCar(const char *license, PortType type) {
+  Car *car = malloc(sizeof(Car));
+  if(!car) {
+    perror("Failed alocate memory on createCar\n");
+    return NULL;
+  }
+  strncpy(car->nLicense,license,8);
+  car->nLicense[8] = '\0';
+  car->portType = type;
+  car->totalPayed = 0.0;
+  car->pPort = NULL;
+  car->inqueue = FALSE;
+  return car;
 }
 
 Car* parseCarLine(const char* line) 
@@ -74,41 +84,15 @@ Car* parseCarLine(const char* line)
   return car;
 };
 
-void printCar(const void* data) 
-{
-  Car* car = (Car*) data;
-  printf("\nRequested car- \n\t|License number: {%s} |\n",car->nLicense);
-  printf("| PortType: %s , TotalPayed: %.2f , inQueue: %u |\n",portTypeToStr(car->portType),car->totalPayed,car->inqueue);
+BOOL isLicenseValid(const char* license) {
+  return strlen(license) == (LICENSE_SIZE - 1) && isNumericString(license);
 }
 
-Car *createCar(const char *license, PortType type) {
-  Car *car = malloc(sizeof(Car));
-  if(!car) {
-    perror("Failed alocate memory on createCar\n");
-    return NULL;
-  }
-  strncpy(car->nLicense,license,8);
-  car->nLicense[8] = '\0';
-  car->portType = type;
-  car->totalPayed = 0.0;
-  car->pPort = NULL;
-  car->inqueue = FALSE;
-  return car;
-}
+int compareCarsByLicense(const void* a, const void*b){
+  const Car *c1 = (const Car*)a;
+  const Car *c2 = (const Car*)b;
 
-Port* getCarPort(Car* car){
-  if(!car) return NULL;
-  Port* port = car->pPort;
-  if(!port) return NULL;
-  return port;
-}
-
-void destroyCar(void *data) {
-  if(!data)return;
-  Car *car = (Car*)data;
-
-  // dynamic fields
-  free(car);
+  return strcmp(c1->nLicense,c2->nLicense);
 }
 
 Car* searchCar(const BinaryTree *carTree,const char *license) {
@@ -121,8 +105,27 @@ Car* searchCar(const BinaryTree *carTree,const char *license) {
   return (Car*)searchBST((BinaryTree*)carTree,&tmp);
 }
 
-BOOL isLicenseValid(const char* license) {
-  return strlen(license) == (LICENSE_SIZE - 1) && isNumericString(license);
+Port* getCarPort(Car* car){
+  if(!car) return NULL;
+  Port* port = car->pPort;
+  if(!port) return NULL;
+  return port;
+}
+
+void printCar(const void* data) 
+{
+  Car* car = (Car*) data;
+  printf("\nRequested car- \n\t|License number: {%s} |\n",car->nLicense);
+  printf("| PortType: %s , TotalPayed: %.2f , inQueue: %u |\n",portTypeToStr(car->portType),car->totalPayed,car->inqueue);
+}
+
+
+void destroyCar(void *data) {
+  if(!data)return;
+  Car *car = (Car*)data;
+
+  // dynamic fields
+  free(car);
 }
 
 Station* findStationOfQueueCar(const TreeNode* node,const Car* car) {
@@ -143,3 +146,29 @@ Station* findStationOfQueueCar(const TreeNode* node,const Car* car) {
   return findStationOfQueueCar(node->right,car);
   
 }
+
+void collectCarsInArray(TreeNode* node,Car** carrArr,int* count) {
+  if(!node) return;;
+
+  collectCarsInArray(node->left,carrArr,count);
+  carrArr[(*count)++] = node->data;
+  collectCarsInArray(node->right,carrArr,count);
+
+}
+
+int compareCarsByTotalPayed(const void* a,const void*b){
+  Car * carA = *(Car**)a;
+  Car * carB = *(Car**)b;
+
+  if(carB->totalPayed > carA->totalPayed) return 1;
+  else if(carB->totalPayed < carA->totalPayed) return -1;
+
+  return 0;
+}
+
+
+
+
+
+
+

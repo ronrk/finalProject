@@ -100,10 +100,6 @@ Car* dequeueByPortType(qCar* queue,PortType portType){
     prev = current;
     current = current->next;
   }
-  char msg[128];
-  snprintf(msg,sizeof(msg),"No car in queue matching port type %s",portTypeToStr(portType));
-  displayError(UI_WARNING,msg);
-
   return NULL;
 }
 

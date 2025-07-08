@@ -30,6 +30,10 @@ void displayMenu(){
       "*7. Report of stations' statistics\n"
       "*8. Display top customers\n"
       "*9. Add New Port\n"
+      "*10. Realease Charging Ports\n"
+      "*11. Remove Out Of Order Ports\n"
+      "*12. Remove Customer\n"
+      "*13. Close Station\n"
       "###### TESTS ######\n"
       "*91. Test Locate Nearest Station\n"
       "*92. Test Charge Car with Inputs\n"
@@ -89,6 +93,24 @@ void mainMenu(SystemData* sys) {
         break;
       case 7:
         reportStStat(&sys->stationTree);
+        break;
+      case 8:
+        dispTopCustomers(&sys->carTree);
+        break;
+      case 9:
+        addNewPort(&sys->stationTree);
+        break;
+      case 10:
+        releasePorts(&sys->stationTree);
+        break;
+      case 11:
+        removeOutOrderPort(&sys->stationTree);
+        break;
+      case 12:
+        remCustomer(&sys->carTree);
+        break;
+      case 13:
+        closeSt(&sys->stationTree);
         break;
       case 91:
         test_locateNearSt_feature(sys);
@@ -270,8 +292,6 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
     }
 }
 
-
-
 //3. Check car status
 
 void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree) {
@@ -442,7 +462,7 @@ void printStationStatics(Station* station,int totalPorts,int occupiedPorts, int 
   int queueSize,double relativeRate) {
 
   
-  printf("\n===== Station Report: %s (ID: %u) =====\n", station->name, station->id);
+  printf("\n===== Station Statics: %s (ID: %u) =====\n", station->name, station->id);
     printf("Total Ports: %d\n", totalPorts);
     printf("Occupied Ports: %d\n", occupiedPorts);
     printf("Available Ports: %d\n", activePorts);
@@ -465,7 +485,6 @@ void printStationStatics(Station* station,int totalPorts,int occupiedPorts, int 
 
     printf("===============================================\n\n");
 }
-
 
 void reportStStat(const BinaryTree* stationTree){
   if(!stationTree||!stationTree->root) {
@@ -514,9 +533,121 @@ void reportStStat(const BinaryTree* stationTree){
     currentChargingCars,queueSize,relativeRate);
 }
 
+// 8.DIsplay top customers
+void dispTopCustomers(const BinaryTree *carTree){
+  if(!carTree || !carTree->root) {
+    printf("No cars in the system\n");
+    return;
+  }
+
+  int capCarArr = 10; //extra buffer
+  Car **carArr = (Car**)malloc(sizeof(Car*)*capCarArr);
+  if(!carArr){
+    printf("Memory allocation error\n");
+    return;
+  }
+
+  int count = 0;
+  collectCarsInArray(carTree->root,carArr,&count);
+
+  if(count == 0) {
+    printf("No cars found error?\n");
+    free(carArr);
+    return;
+  }
+
+  qsort(carArr,count,sizeof(Car*),compareCarsByTotalPayed);
+
+  printf("\n=== Top %d Customers ===\n", count < 5 ? count : 5);
+    for (int i = 0; i < count && i < 5; i++) {
+      printf("%d. License: %s | Total Paid: %.2lf\n", i + 1, carArr[i]->nLicense, carArr[i]->totalPayed);
+    }
+  printf("========================\n");
+
+}
+
+// 9. Add new port
+void addNewPort(BinaryTree* stationTree) {
+  if(!stationTree || !stationTree->root) {
+    printf("Failed access data\n");
+    return;
+  }
+
+  Station *station = getStationFromUser(stationTree);
+  if(!station) {
+    {
+      printf("canceld\n");
+      return;
+    }
+  }
+  PortType pType = getPortTypeFromUser();
+  if(pType == INVALID_PORT) {
+    printf("canceled");
+    return;
+  }
+
+  int nextPortNum = getNextPortNum(station);
+  if(nextPortNum == 0) {
+    displayError(ERR_LOADING_DATA,"Error get new port number");
+    return;
+  }
+
+  Date now = getCurrentDate();
+  Port* newPort = createPort(nextPortNum,pType,FREE,now);
+  if(!newPort) {
+    displayError(ERR_MEMORY,"Error creating new port");
+    return;
+  }
+
+  station->portsList = insertPort(station->portsList,newPort);
+  station->nPorts++;
+
+  printf("\n=== Add New Port ===\n");
+  printf("Port #%d (%s) addes to station %s\n",newPort->num,portTypeToStr(newPort->portType),station->name);
+
+
+  Car* car = dequeueByPortType(station->qCar,newPort->portType);
+  if(car) {
+    if(assignCar2Port(newPort,car,now))
+      printf("Assigned car {%s} from queue to port #%d at station %s\n",car->nLicense,newPort->num,station->name);
+    else 
+      {
+        char msg[128];
+        snprintf(msg,sizeof(msg),"ERROR: Found car %s with type %s but unable to assign to new port type %s",
+          car->nLicense,portTypeToStr(car->portType),portTypeToStr(newPort->portType));
+        displayError(ERR_PARSING,msg);
+        return;
+      }
+
+  } else {
+    printf("No waiting car compatible with port type %s\n",portTypeToStr(newPort->portType));
+  }
+}
+
+// 10.Realease Charging Ports
+void releasePorts(BinaryTree* stationTree){
+  printf("\n=== Release Ports ===\n");
+}
+
+// 11.Remove Out Of Order Ports
+void removeOutOrderPort(BinaryTree* stationTree){
+  printf("\n=== Remove Out-Of-Order Port ===\n");
+}
+
+// 12.Remove Customer
+void remCustomer(BinaryTree* carTree){
+  printf("\n=== Remove Customer ===\n");
+}
+
+// 13.Close Station
+void closeSt(BinaryTree* stationTree){
+  printf("\n=== Close Station ===\n");
+}
 
 // 
 // 
+// helpers
+
 Station* getStationFromUser(const BinaryTree *stationTree) {
   char input[100];
   SearchKey key;

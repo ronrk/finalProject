@@ -185,6 +185,21 @@ BOOL isPortTypeValid(const char* pTypeKey) {
   );
 }
 
+int getNextPortNum(Station* station){
+  if(!station || !station->portsList) return 0;
+  int nextPortNum = 1;
+  Port *current = station->portsList;
+
+  while (current)
+  {
+    if(current->num >= nextPortNum)
+      nextPortNum = current->num + 1;
+
+    current = current->next;
+  }
+  
+  return nextPortNum;
+}
 
 
 // Port* findAvailablePort(Port* portList, PortType type) {
