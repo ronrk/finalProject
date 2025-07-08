@@ -211,7 +211,7 @@ SystemData* loadFiles(){
   return sys;
 }
 
-int loadDataFile(const FileLoaderConfig *config) {
+int fileLoader(const FileLoaderConfig *config) {
   char msg[128];
   // 1. Validate configuration
   if(!config || !config->filename || !config->parser || !config->destroyObject) {
@@ -288,7 +288,7 @@ int loadStations(BinaryTree *stationTree){
     .destroyObject=StationDestroy,
     .skipHeader = 1
   };
-  return loadDataFile(&config);
+  return fileLoader(&config);
 }
 
 int loadCars(BinaryTree *carTree){
@@ -301,7 +301,7 @@ int loadCars(BinaryTree *carTree){
     .destroyObject = destroyCar,
     .skipHeader = 1
   };
-  return loadDataFile(&config);
+  return fileLoader(&config);
 }
 
 int loadPorts(SystemData *sys){
@@ -314,7 +314,7 @@ int loadPorts(SystemData *sys){
     .destroyObject = destroyPortTemp,
     .skipHeader = 1
   };
-  return loadDataFile(&config);
+  return fileLoader(&config);
 }
 
 int loadLineOfCars(SystemData *sys) {
@@ -329,6 +329,6 @@ int loadLineOfCars(SystemData *sys) {
     .skipHeader = 1
   }; 
 
-  return loadDataFile(&config);
+  return fileLoader(&config);
 }
 

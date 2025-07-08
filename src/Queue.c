@@ -93,8 +93,6 @@ Car* dequeueByPortType(qCar* queue,PortType portType){
   while (current)
   {
     if(current->data&&current->data->portType == portType) {
-      printf("[Dequeue] Found car %s matching port type %s.\n",
-                   current->data->nLicense, portTypeToStr(portType));
       return removeNode(queue,prev,current);
     }
 
@@ -105,7 +103,6 @@ Car* dequeueByPortType(qCar* queue,PortType portType){
   snprintf(msg,sizeof(msg),"No car in queue matching port type %s",portTypeToStr(portType));
   displayError(UI_WARNING,msg);
 
-  printf("[Dequeue] No car in queue matching port type %s.\n", portTypeToStr(portType));
   return NULL;
 }
 

@@ -18,9 +18,11 @@ void printCarQueue(qCar* queue, const char* stationName);
 void testStopCharge(BinaryTree* stationTree, BinaryTree* carTree);
 void initTestSystem(SystemData *sys);
 
-void test_loadALl();
-void test_locateNearSt_full(BinaryTree *stationTree);
-void test_cargeCarWithInput(SystemData* sys);
-void test_stopCharg(SystemData *sys);
+
+void run_loader_tests();
+void run_parser_tests();
+void test_locateNearSt_feature(SystemData* sys);
+void test_chargeCar_feature(SystemData* sys);
+void test_stopCharg(SystemData* sys);
 
 #endif

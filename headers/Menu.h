@@ -32,7 +32,7 @@ Station* getStationFromUser(const BinaryTree *stationTree);
 PortType getPortTypeFromUser();
 Port* getPortNumFromUser(Port* portList,const PortType portType);
 BOOL getLicenseFromUser(char *input,size_t size);
-int printCompatibleFreePorts(Port* head,PortType carType);
+int printCompatibleFreePorts(Port* head,PortType carType,char * stationName);
 
 // 3: Check Car Status
 void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree);
@@ -41,7 +41,7 @@ void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree);
 // 4: Stop Charge
 void stopCharge(BinaryTree* stationTree,BinaryTree* carTree);
 void processStopCharge(Car *car,BinaryTree* stationTree);
-Car * findCarToStopCharge(BinaryTree* carTree, char* license);
+
 
 // 5. Display all stations
 void dispAllSt(BinaryTree* stationTree);

@@ -10,20 +10,14 @@
 
 int main() {
     // testQueueOperations();
-    
+    // run_loader_tests();
+
     SystemData *sys = loadFiles();
     if (!sys) {
         fprintf(stderr, "Failed to load system data\n");
         return 1;
     }
-
-    // testLoadFiles();
-    // printStationQueues(sys);
-    // printStationPorts(sys);
-    // Date now = getCurrentDate();
-    // assignCarsToAvailablePorts(sys,now);
-    
-    
+        
     mainMenu(sys); 
     saveAndCleanupSystem(sys);
 

@@ -81,7 +81,11 @@ void unlinkCarPort(Car* car){
 }
 
 void tryAssignNextCarFromQueue(Station *station, Port *port, Date now) {
-  if( !station|| !port|| !station->qCar || isEmpty(station->qCar)) return;
+  if( !station|| !port|| !station->qCar) return;
+  if(isEmpty(station->qCar)) {
+    printf("No cars waiting in station");
+    return;
+  }
 
   PortType pType = port->portType;
   Car* nextCar = dequeueByPortType(station->qCar,pType);
@@ -141,7 +145,7 @@ void printPortList(Port *head) {
 
 void printPort(const Port* port) {
 
-  printf("Port Number: %u  |  Type: %s  |  Status: %s\n",port->num,portTypeToStr(port->portType),statusToStr(port->status));
+  printf("| Port Number: %u  ,  Type: %s  ,  Status: %s |\n",port->num,portTypeToStr(port->portType),statusToStr(port->status));
 
 }
 

@@ -63,11 +63,6 @@ void destroyTree(TreeNode *root,FreeFunc destroy) {
   free(root);
 }
 
-int countTreeNodes(TreeNode* node) {
-    if (!node) return 0;
-    return 1 + countTreeNodes(node->left) + countTreeNodes(node->right);
-}
-
 // init BTS
 BinaryTree initTree(CompareFunc cmp,PrintFunc print,FreeFunc destroy) {
 
@@ -105,6 +100,24 @@ int insertBST(BinaryTree *tree,void *data) {
   return 1;
 }
 
+
+void* findMaxData(TreeNode* root, CompareFunc cmp) {
+  if(!root||!cmp) return NULL;
+
+  void * maxData = root->data;
+  void* maxLeft = findMaxData(root->left,cmp);
+
+  if(maxLeft&&cmp(maxLeft,maxData)>0){
+    maxData =maxLeft;
+  }
+
+  void* maxRight = findMaxData(root->right,cmp);
+  if(maxRight&&cmp(maxRight,maxData)>0){
+    maxData =maxRight;
+  }
+
+  return maxData;
+}
 // search
 // void * searchBST(BinaryTree *tree, const void* data) {
 //   if(!tree||!tree->root||!data) return NULL;

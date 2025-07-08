@@ -35,7 +35,6 @@ void mainMenu(SystemData* sys) {
       "*8. Display top customers\n"
       "*9. Add New Port\n"
       "###### TESTS ######\n"
-      "*90. Test Load Full System\n"
       "*91. Test Locate Nearest Station\n"
       "*92. Test Charge Car with Inputs\n"
       "*93. Test Stop Charge with Inputs\n"
@@ -75,35 +74,14 @@ void mainMenu(SystemData* sys) {
       case 6:
         dispCarsAtSt(&sys->stationTree);
         break;
-      case 90:
-        test_loadALl();
-        break;
       case 91:
-        test_locateNearSt_full(&sys->stationTree);
+        test_locateNearSt_feature(sys);
         break;
       case 92:
-        test_cargeCarWithInput(sys);
+        test_chargeCar_feature(sys);
         break;
       case 93:
-        test_stopCharg(sys);
-        break;
-      case 94:
-        test_loadALl();
-        break;
-      case 95:
-        test_loadALl();
-        break;
-      case 96:
-        test_loadALl();
-        break;
-      case 97:
-        test_loadALl();
-        break;
-      case 98:
-        test_loadALl();
-        break;
-      case 99:
-        test_loadALl();
+      test_stopCharg(sys);
         break;
       case 0:
         printf("Exiting system...\n");
@@ -148,7 +126,7 @@ void locateNearSt(const BinaryTree * stationTree) {
       printf("Id: %u\n",nearest->id);
       printf("Distance: %.2f\n",dist);
       printf("Ports Available: %d/%d\n",
-        countFreePorts(nearest->portsList),nearest->nPorts);
+      countFreePorts(nearest->portsList),nearest->nPorts);
 
         // printQueue
         if(nearest->qCar && !isEmpty(nearest->qCar)) {
@@ -188,11 +166,11 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
   if(car) {
     port = getCarPort(car);
     if(port !=NULL) {
-      printf("Unavailable car %s is connected on port %d\n", car->nLicense, port->num);
+      printf("Car %s is already connected on port %d\n", car->nLicense, port->num);
       return;
     }
     if(car->inqueue){
-      printf("Unavailable car %s is already in queue\n", car->nLicense);
+      printf("Car %s is already in queue\n", car->nLicense);
       return;
     }
   }
@@ -205,9 +183,8 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
   }
 
   if(car) { //found car
-    printf("Car found in system:\n");
     printCar(car);
-    availablePorts = printCompatibleFreePorts(station->portsList,car->portType);
+    availablePorts = printCompatibleFreePorts(station->portsList,car->portType,station->name);
     if(availablePorts == 0) {
       printf("Sorry no available port for %s type\n",portTypeToStr(car->portType));
       return;
@@ -221,11 +198,11 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
     // get port type
     pType = getPortTypeFromUser();
     if (pType == INVALID_PORT || pType == -1) {
-      printf("Invalid or canceled port type selection.\n");
+      printf("Invalid or canceled port type selection\n");
       return;
     }
 
-    availablePorts = printCompatibleFreePorts(station->portsList,pType);
+    availablePorts = printCompatibleFreePorts(station->portsList,pType,station->name);
 
     if(availablePorts == 0) {
       printf("Sorry no available port for %s type\n",portTypeToStr(pType));
@@ -233,7 +210,7 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
     }
     port = getPortNumFromUser(station->portsList,pType);
     if(!port) {
-      printf("Invalid or canceled port selection.\n");
+      printf("Invalid or canceled port selection\n");
       return;
     }
 
@@ -257,7 +234,8 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
     // port free
     Date now = getCurrentDate();
     if(assignCar2Port(port,car,now)) {
-      printf("Car %s assigned to port %u at station %s\n", car->nLicense, port->num, station->name);
+      printf("\nCar %s assigned to port %u at station %s\n", car->nLicense, port->num, station->name);
+      printf("\t");
       printPort(port);
 
       } else {
@@ -278,6 +256,173 @@ void chargeCar(BinaryTree *stationTree,BinaryTree* carTree){
 }
 
 
+
+//3. Check car status
+
+void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree) {
+  Station* station = NULL;
+  Port* port = NULL;
+
+  printf("\n\t=== Check Car Status ===\t\n");
+
+  // get license
+  char license[128];
+  if(!getLicenseFromUser(license,sizeof(license))) {
+    return;
+  }
+
+  // search car
+  Car* car = searchCar(carTree,license);
+  
+  if(car) {
+    printCar(car);
+
+    if(car->pPort) {
+      port = car->pPort;
+      station = findStationByPort(stationTree,port);
+
+      Date now = getCurrentDate();
+      int min = diffInMin(port->tin, now);
+
+      printf("\nCar is charging at station %s (%d), port #%d\n",station->name,station->id,port->num);
+      printf("\tCharging time: %d minutes\n",min);
+
+    } else if (car->inqueue){
+      station = findStationOfQueueCar(stationTree->root,car);
+      if(station) {
+        printf("\ncar is currently waitng at station %s (%d) for type %s\n",station->name,station->id,portTypeToStr(car->portType));
+      } else {
+        printf("[ERROR]car is queued but not found at station\n");
+      }
+
+    } else {
+      printf("\ncar is not charging and not in queue.\n");
+    }
+    return;
+  }
+
+}
+
+// 4. Stop Charge
+
+void stopCharge(BinaryTree* stationTree,BinaryTree* carTree) {
+  if(!stationTree || !carTree) {
+    printf("No Data\n");
+    return;
+  }
+  printf("\n\t=== Stop Charging ===\t\n");
+
+  char license[LICENSE_SIZE];
+  if(!getLicenseFromUser(license,sizeof(license))){
+    return;
+  }
+
+  Car* car = searchCar(carTree,license);
+  if(!car) {
+    printf("No car in system\n");
+    return;
+  }
+  if(!car->pPort) {
+    printf("This car is not currently chargin\n");
+    return;
+  }
+
+  processStopCharge(car, stationTree);
+}
+
+void processStopCharge(Car *car,BinaryTree* stationTree) {
+  // init variable, duration, date, payed
+  Port* port = car->pPort;
+  Date now = getCurrentDate();
+  int minutesCharged = diffInMin(car->pPort->tin,now);
+  if(minutesCharged<1) minutesCharged = 1;
+  double bill = minutesCharged*RATE_CHARGE;
+  car->totalPayed += bill;
+
+  printf("Charging stopped for car %s after %d minutes, bill: %.2f\n", car->nLicense, minutesCharged,bill);
+  printf("Total payment updated: %.2f\n", car->totalPayed);
+
+  // find station
+  Station* station = findStationByCar(stationTree,car);
+
+  // unlink carPort
+  unlinkCarPort(car);
+
+  // check queue for compatible cars if yes dequeue and assignCar2Port
+  tryAssignNextCarFromQueue(station,port,now);
+  printf("\n");
+
+}
+
+// 5. Display all stations
+void dispAllSt(BinaryTree* stationTree){
+  if(!stationTree||!stationTree->root) {
+    printCar("No Stations Loaded\n");
+    return;
+  }
+
+  printf("\n\t=== All Charging Stations ===\t\n");
+  inorderBST(stationTree,printStationSummary);
+  printf("=============================\n");
+
+}
+
+// 6. Display all cars in station
+void dispCarsAtSt(BinaryTree* stationTree){
+  if(!stationTree) return;
+  
+  Station* station = getStationFromUser(stationTree);
+  if(!station) return;
+
+  printf("\n=== Cars at Station: %s (%d) ===\n",station->name,station->id);
+
+  displayChargingCars(station);
+
+  displayWaitingsCars(station);
+  
+  printf("==============================\n");
+}
+
+void displayChargingCars(const Station* station){
+  if(!station) return;
+  Port *port = station->portsList;
+  Date now = getCurrentDate();
+  int foundCars = 0;
+
+  while (port)
+  {
+    if(port->p2Car){
+      int chargeMin = diffInMin(port->tin,now);
+      if (chargeMin < 0) chargeMin = 0;
+      printf("Charging: Car %s | Port Type: %s | Charging for %d minutes\n",port->p2Car->nLicense,portTypeToStr(port->portType),chargeMin);
+      foundCars = 1;
+    }
+
+    port = port->next;
+  }
+  if(foundCars == 0){
+    printf("No cars currently in charging\n");
+  }
+}
+
+void displayWaitingsCars(const Station* station){
+  // cars waiting
+  if(!station || !station->qCar || !isEmpty(station->qCar)) return;
+  if(station->qCar && !isEmpty(station->qCar)){
+    CarNode *current = station->qCar->front;
+    while (current)
+    {
+      printf("Waiting car %s | Port type: %s\n",current->data->nLicense,portTypeToStr(current->data->portType));
+
+      current = current->next;
+    }
+  } else {
+    printf("No cars waiting in the queue\n");
+  }
+}
+
+// 
+// 
 Station* getStationFromUser(const BinaryTree *stationTree) {
   char input[100];
   SearchKey key;
@@ -377,15 +522,15 @@ BOOL getLicenseFromUser(char *input,size_t size) {
 
 }
 
-int printCompatibleFreePorts(Port* head,PortType carType){
-  printf("\n %s ports in station: \n",portTypeToStr(carType));
+int printCompatibleFreePorts(Port* head,PortType carType,char * stationName){
+  printf("|%s| types ports in %s: \n",portTypeToStr(carType),stationName);
   int found = 0;
   while(head) {
     if(isCompatiblePortType(carType,head->portType)) {
       if(isPortAvailable(head)){
-        printf("-%d. Port \n",head->num);
+        printf("\t#%d. Port \n",head->num);
       } else {
-        printf("- %d.Port (occupied, enter to queue?)\n",head->num);
+        printf("\t#%d.Port (occupied, enter to queue?)\n",head->num);
       }
       
       found++;
@@ -396,262 +541,4 @@ int printCompatibleFreePorts(Port* head,PortType carType){
     printf("No compatible ports for type %s\n",portTypeToStr(carType));
   }
   return found;
-}
-
-//3. Check car status
-
-void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree) {
-  Station* station = NULL;
-  Port* port = NULL;
-
-  printf("\n\t=== Check Car Status ===\t\n");
-
-  // get license
-  char license[128];
-  if(!getLicenseFromUser(license,sizeof(license))) {
-    return;
-  }
-
-  // search car
-  Car* car = searchCar(carTree,license);
-  
-  if(car) {
-    printf("Car found in system:\n");
-    printCar(car);
-
-    if(car->pPort) {
-      port = car->pPort;
-      station = findStationByPort(stationTree,port);
-
-      Date now = getCurrentDate();
-      int min = diffInMin(port->tin, now);
-
-      printf("Car is charging at station %s (%d), port #%d\n",station->name,station->id,port->num);
-      printf("Charging time: %d minutes\n",min);
-
-    } else if (car->inqueue){
-      station = findStationOfQueueCar(stationTree->root,car);
-      if(station) {
-        printf("car is currently waitng at station %s (%d) for type %s\n",station->name,station->id,portTypeToStr(car->portType));
-      } else {
-        printf("[ERROR]car is queued but not found at station\n");
-      }
-
-    } else {
-      printf("car is not charging and not in queue.\n");
-    }
-    return;
-  }
-
-}
-
-// 4. Stop Charge
-
-void stopCharge(BinaryTree* stationTree,BinaryTree* carTree) {
-  if(!stationTree || !carTree) {
-    printf("No Data\n");
-    return;
-  }
-  printf("\n\t=== Stop Charging ===\t\n");
-
-  char license[LICENSE_SIZE];
-  if(!getLicenseFromUser(license,sizeof(license))){
-    return;
-  }
-
-  Car* car = searchCar(carTree,license);
-  if(!car) {
-    printf("No car in system\n");
-    return;
-  }
-  if(!car->pPort) {
-    printf("This car is not currently chargin\n");
-    return;
-  }
-
-  processStopCharge(car, stationTree);
-}
-
-void processStopCharge(Car *car,BinaryTree* stationTree) {
-  // init variable, duration, date, payed
-  Port* port = car->pPort;
-  printf("[DEBUG] processStopCharge: car %s assigned port at %p\n", car->nLicense, (void*)port);
-  Date now = getCurrentDate();
-  int minutesCharged = diffInMin(car->pPort->tin,now);
-  if(minutesCharged<1) minutesCharged = 1;
-  car->totalPayed += (double) minutesCharged * RATE_CHARGE;
-
-  printf("Charging stopped for car %s after %d minutes\n", car->nLicense, minutesCharged);
-  printf("Total payment updated: %.2f\n", car->totalPayed);
-
-  // find station
-  Station* station = findStationByCar(stationTree,car);
-  if(!station){
-    printf("Error; station not found for car %s\n",car->nLicense);
-    // 
-    // 
-    printf("[DEBUG ERROR] station not found for car %s (port %p)\n", car->nLicense, (void*)port);
-
-    // For extra info, print all stations in tree and their ports
-    printf("[DEBUG] Printing stations and their ports:\n");
-
-    printStationSummary(stationTree);  // you will need to write this helper function
-  } else {
-    printf("[DEBUG] Found station %s (id %d) for car %s\n", station->name, station->id, car->nLicense);
-  }
-
-  printf("[DEBUG] unlinking car %s from port %p\n", car->nLicense, (void*)port);
-  // unlink carPort
-  unlinkCarPort(car);
-
-  printf("[DEBUG] trying to assign next car from queue to port %p\n", (void*)port);
-  // check queue for compatible cars if yes dequeue and assignCar2Port
-  tryAssignNextCarFromQueue(station,port,now);
-
-}
-
-// 5. Display all stations
-void dispAllSt(BinaryTree* stationTree){
-  if(!stationTree||!stationTree->root) {
-    printCar("No Stations Loaded\n");
-    return;
-  }
-
-  printf("\n\t=== All Charging Stations ===\t\n");
-  inorderBST(stationTree,printStationSummary);
-  printf("=============================\n");
-
-}
-
-// 6. Display all cars in station
-void dispCarsAtSt(BinaryTree* stationTree){
-  if(!stationTree) return;
-  
-  Station* station = getStationFromUser(stationTree);
-  if(!station) return;
-
-  printf("\n=== Cars at Station: %s (%d) ===\n",station->name,station->id);
-
-  displayChargingCars(station);
-
-  displayWaitingsCars(station);
-  
-  printf("==============================\n");
-}
-
-void displayChargingCars(const Station* station){
-  if(!station) return;
-  Port *port = station->portsList;
-  Date now = getCurrentDate();
-  int foundCars = 0;
-
-  while (port)
-  {
-    if(port->p2Car){
-      int chargeMin = diffInMin(port->tin,now);
-      if (chargeMin < 0) chargeMin = 0;
-      printf("Charging: Car %s | Port Type: %s | Charging for %d minutes\n",port->p2Car->nLicense,portTypeToStr(port->portType),chargeMin);
-      foundCars = 1;
-    }
-
-    port = port->next;
-  }
-  if(foundCars == 0){
-    printf("No cars currently in charging\n");
-  }
-}
-
-void displayWaitingsCars(const Station* station){
-  // cars waiting
-  if(!station || !station->qCar || !isEmpty(station->qCar)) return;
-  if(station->qCar && !isEmpty(station->qCar)){
-    CarNode *current = station->qCar->front;
-    while (current)
-    {
-      printf("Waiting car %s | Port type: %s\n",current->data->nLicense,portTypeToStr(current->data->portType));
-
-      current = current->next;
-    }
-  } else {
-    printf("No cars waiting in the queue\n");
-  }
-}
-
-// FOR TESTING
-
-void displaySystemStatus(const BinaryTree *stationTree, const BinaryTree *carTree) {
-    printf("\n========== SYSTEM STATUS ==========\n");
-
-    printf("\n-- All Stations --\n");
-    if (!stationTree || !stationTree->root) {
-        printf("No stations found.\n");
-    } else {
-        inorderBST((BinaryTree *)stationTree, printFullStation);
-    }
-
-    printf("\n-- All Registered Cars --\n");
-    if (!carTree || !carTree->root) {
-        printf("No cars found.\n");
-    } else {
-        inorderBST((BinaryTree *)carTree, printCar); // you already have printCar
-    }
-
-    printf("\n===================================\n");
-}
-
-void createStationInteractive(BinaryTree* stationTree) {
-  char name[MAX_NAME];
-  SearchKey key;
-  SearchType type;
-
-  // ask for station details
-  printf("---- Create New Station ----\n");
-  while (TRUE)
-  {
-     // prompt for name
-    if(!getInputAndCancel(name,sizeof(name),"Enter station name (or 0 to cancel): ")) 
-      return;
-    
-      if(strlen(name) < 2) {
-        printf("Name too short. Try again.\n");
-        continue;
-      }
-
-      // check if name exist
-      strncpy(key.name,name,sizeof(key.name) -1);
-      key.name[sizeof(key.name) - 1] = '\0';
-      key.type = SEARCH_BY_NAME;
-
-      if(searchStation(stationTree,&key)) {
-        printf("Station with this name already exist\n");
-        continue;
-      }
-
-      break; // valid
-  }
-
-  // Generate a unique id
-  unsigned int id = generateUniqueStationId(stationTree);
-  printf("Generated station ID: %u\n", id);
-
-  // create station
-  Coord coord;
-  if(!getCoordFromUser(&coord, "Enter X coord: ", "Enter Y coord: ")) {
-    printf("Canceld");
-    return;
-  };
-
-  Station *newStation = StationCreate(id,name,0,coord);
-  if(!newStation) {
-    printf("Failed to create station\n");
-    return;
-  }
-
-  if(!insertBST(stationTree,newStation)) {
-    printf("Failed to insert station into system\n");
-    stationTree->destroy(newStation);
-    return;
-  }
-  printf("Station '%s' created successfully with ID %u!\n", name, id);
-  
 }

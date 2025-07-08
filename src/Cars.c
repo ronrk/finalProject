@@ -77,7 +77,8 @@ Car* parseCarLine(const char* line)
 void printCar(const void* data) 
 {
   Car* car = (Car*) data;
-  printf("License: %s | PortType: %s | TotalPayed: %.2f | inQueue: %u\n",car->nLicense,portTypeToStr(car->portType),car->totalPayed,car->inqueue);
+  printf("\nRequested car- \n\t|License number: {%s} |\n",car->nLicense);
+  printf("| PortType: %s , TotalPayed: %.2f , inQueue: %u |\n",portTypeToStr(car->portType),car->totalPayed,car->inqueue);
 }
 
 Car *createCar(const char *license, PortType type) {

@@ -18,14 +18,13 @@ Station *searchByDistance(const BinaryTree *tree, SearchKey *key);
 Station *StationCreate(unsigned int id, const char *name, int nPorts, Coord coord)
 {
   // printf("[StationCreate] Creating station %u\n", id);
-  Station *s = malloc(sizeof(Station));
+  Station *s = (Station *)malloc(sizeof(Station));
   if (!s)
   {
     perror("Failed Allocation Memory Create Station\n");
     return NULL;
   }
-  printf("[DEBUG] StationCreate returns %p\n", (void *)s);
-  // printf("[Create3] Allocated station struct\n");
+
   // copy name
   s->name = strdup(name);
   if (!s->name)
@@ -121,7 +120,7 @@ int compareStation(const void *a, const void *b)
 
 void printStation(const void *data)
 {
-  const Station *station = data;
+  const Station *station = (Station *)data;
   printf("Station ID: %u  |  Name: %s |  Ports: %d  |  Cars: %d\n", station->id, station->name, station->nPorts, station->nCars);
 }
 
@@ -246,7 +245,7 @@ static void findMax(TreeNode *node, unsigned int *maxId)
 
 unsigned int generateUniqueStationId(BinaryTree *tree)
 {
-  unsigned int maxId = 100; // start from 100 at least
+  unsigned int maxId = 1000; // start from 100 at least
   if (tree && tree->root)
     findMax(tree->root, &maxId);
 
@@ -321,30 +320,17 @@ Station *findStationByPort(const BinaryTree *tree, const Port *port)
     current = stack[top--];
     Station *station = (Station *)current->data;
 
-    printf("Checking station %s (%p) portsList head: %p\n",
-           station->name, (void *)station, (void *)station->portsList);
-    int limit = 100;
     // Check if the port exists in this station's list
     Port *p = station->portsList;
     while (p)
     {
-      if (--limit <= 0)
-      {
-        printf("⚠️  Emergency break: potential circular reference in port list of station %s\n", station->name);
-        break; // instead of exit(1)
-      }
+
       // printf("  Port at %p, p->p2Car = %p\n", (void *)p, (void *)p->p2Car);
       if (p == port)
       { // Compare by pointer (memory address)
-        printf("  Found matching port!\n");
         return station;
       }
       p = p->next;
-    }
-    if (limit <= 0)
-    {
-      printf("⚠️  Circular port list detected in station: %s\n", station->name);
-      exit(1);
     }
 
     current = current->right;

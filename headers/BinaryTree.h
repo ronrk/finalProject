@@ -32,13 +32,11 @@ typedef struct BinaryTree
 // init a BinaryTree with function pointers
 BinaryTree initTree(CompareFunc cmp, PrintFunc print, FreeFunc destroy);
 
-
 // insert data to the tree
 TreeNode *insertNode(TreeNode *root, void *data, CompareFunc cmp);
 
 // insert data
 int insertBST(BinaryTree *bst, void *data);
-
 
 // count nodes
 int countNodes(TreeNode *root);
@@ -48,6 +46,9 @@ void destroyTree(TreeNode *root, FreeFunc destroy);
 
 
 void inorderBST(BinaryTree *tree, void (*printFunc)(const void *));
+
+// find maximum node with custom cmp function
+void* findMaxData(TreeNode* root, CompareFunc cmp);
 
 
 

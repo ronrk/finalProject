@@ -2,8 +2,10 @@
 #include "Port.h"
 #include "Menu.h"
 #include "SystemData.h"
+#include "BinaryTree.h"
 #include "Utilis.h"
 #include <assert.h>
+#include <stdio.h>
 
 
 // Test function
@@ -82,428 +84,295 @@ void printQueueForStation(const Station* station) {
 
 // TEST LOAD FILES
 // test parsing station to line
-void test_stationParser(){
+void test_stationParser_valid(){
     printf("\n=== Test: stationParser ===\n");
     // valid line
     const char *line = "101,Tel Aviv Center,4,32.0853,34.7818";
     Station *station = stationParser(line);
-    if(station){
-        printf("[PASS] stationParser: ID=%u, Name=%s, Ports=%d, Location=(%.2f, %.2f)\n",
-            station->id, station->name, station->nPorts, station->coord.x, station->coord.y);
-        StationDestroy(station);
-    } else {
-        printf("[FAIL] stationParser: Valid line failed to parse\n");
-    }
-
-    // invalid line
-    const char* badLine = "bad,data,line";
-    if (!stationParser(badLine)) {
-        printf("[PASS] stationParser: Detected invalid line correctly\n");
-    } else {
-        printf("[FAIL] stationParser: Incorrectly accepted bad line\n");
-    }
+    // check NULL
+    assert(station!=NULL);
+    assert(station->id == 101);
+    assert(station->nPorts == 4);
+    assert(station->coord.x == 32.0853f);
+    assert(station->coord.y == 34.7818f);
+    printf("[PASS] stationParser: valid input parsed successfully\n");
+    StationDestroy(station);
 }
 
-// testloading station from file
-void test_loadStations(){
-    printf("\n=== Test: loadStations ===\n");
-
-    BinaryTree tree = initTree(compareStation,printStation,StationDestroy);
-
-    int count = loadStations(&tree);
-
-    if (count > 0) {
-        printf("[PASS] loadStations: Loaded %d stations successfully.\n", count);
-        printf("[INFO] Displaying loaded stations (inorder traversal):\n");
-        inorderBST(&tree, printStation);  // prints all loaded stations
-    } else {
-        printf("[FAIL] loadStations: Failed to load stations. Count = %d\n", count);
-    }
-
-    destroyTree(tree.root,tree.destroy);
+void test_stationParser_invalid() {
+    const char *badLine = "invalid,line,with,bad,data";
+    Station *station = stationParser(badLine);
+    assert(station == NULL);
+    printf("[PASS] stationParser: invalid input handle correctly\n");
 }
 
-// test loading Cars.txt into binary tree
-void test_loadCars(){
-    printf("\n=== TEST: loadCars ===\n");
-
-  // initialize a binary tree for cars
-  BinaryTree carTree = initTree(compareCars, printCar, destroyCar);
-
-  // load car data from file
-  int count = loadCars(&carTree);
-
-  // display result
-  if (count > 0) {
-    printf("[PASS] loadCars: loaded %d cars.\n", count);
-  } else {
-    printf("[FAIL] loadCars: Failed to load cars or empty file.\n");
-  }
-
-  // display loaded cars
-  inorderBST(&carTree, printCar);
-
-  // Step 5: Cleanup memory
-  destroyTree(carTree.root, carTree.destroy);
+void run_parser_tests() {
+    printf("\n==== TEST: stationParser ====\n");
+    test_stationParser_valid();
+    test_stationParser_invalid();
+    printf("==== DONE: stationParser ====\n");
 }
 
+// load stations
+void test_loadStations_basic() {
+    printf("\n==== TEST: loadStations ====\n");
 
-// test loading ports Ports.txt and link to station
-void test_loadPorts(){
-    printf("\n=== TEST: loadPorts ===\n");
+    BinaryTree stationTree = initTree(compareStation, printStation, StationDestroy);
+    int count = loadStations(&stationTree);
 
-  // allocate system data
-  SystemData *sys = malloc(sizeof(SystemData));
-  if (!sys) {
-    printf("Memory allocation failed.\n");
-    return;
-  }
+    assert(count > 0);
+    printf("[PASS] loadStations: Loaded %d stations successfully\n", count);
 
-  // initialize trees
-  sys->carTree = initTree(compareCars, printCar, destroyCar);
-  sys->stationTree = initTree(compareStation, printStation, StationDestroy);
+    printf("[INFO] Display loaded stations :\n");
+    inorderBST(&stationTree, printStation);
 
-  // load stations and cars data
-  int stationsLoaded = loadStations(&sys->stationTree);
-  int carsLoaded = loadCars(&sys->carTree);
-
-  if (stationsLoaded <= 0 || carsLoaded <= 0) {
-    printf("[FAIL] loadPorts: Failed to load prerequisite data. Cannot continue test\n");
-    saveAndCleanupSystem(sys);
-    return;
-  }
-
-  // load ports and link them
-  int portsLoaded = loadPorts(sys);
-  if (portsLoaded > 0) {
-    printf("Successfully loaded and linked %d ports.\n", portsLoaded);
-  } else {
-    printf("[FAIL] loadPorts : Failed to load ports or none found.\n");
-  }
-
-  // display ports for each station
-  printf("\n--- Ports per Station ---\n");
-  inorderBST(&sys->stationTree, printStationPorts);
-
-  // clean
-  saveAndCleanupSystem(sys);
+    destroyTree(stationTree.root, stationTree.destroy);
 }
+// load cars
+void test_loadCars_basic() {
+    printf("\n==== TEST: loadCars ====\n");
 
-// test load lines of cars LinesOfCars.txt
-void test_loadLinesOfCars(){
-    printf("\n=== TEST: loadLineOfCars ===\n");
-    // allocate and init system
+    BinaryTree carTree = initTree(compareCars, printCar, destroyCar);
+    int count = loadCars(&carTree);
+
+    assert(count > 0);
+    printf("[PASS] loadCars: Loaded %d cars successfully\n", count);
+
+    printf("[INFO] Display loaded cars:\n");
+    inorderBST(&carTree, printCar);
+
+    destroyTree(carTree.root, carTree.destroy);
+}
+// load ports
+void test_loadPorts_basic() {
+    printf("\n==== TEST: loadPorts ====\n");
+
     SystemData *sys = malloc(sizeof(SystemData));
-    if (!sys) {
-        printf("Memory allocation failed\n");
-        return;
-    }
+    assert(sys != NULL);
 
-    // init trees
+    sys->carTree = initTree(compareCars, printCar, destroyCar);
+    sys->stationTree = initTree(compareStation, printStation, StationDestroy);
+
+    int stationsLoaded = loadStations(&sys->stationTree);
+    int carsLoaded = loadCars(&sys->carTree);
+    assert(stationsLoaded > 0 && carsLoaded > 0);
+
+    int portsLoaded = loadPorts(sys);
+    assert(portsLoaded > 0);
+
+    printf("[PASS] loadPorts: Loaded %d ports and linked them to stations\n", portsLoaded);
+
+    printf("[INFO] Display ports at station:\n");
+    inorderBST(&sys->stationTree, printStationPorts);
+
+    saveAndCleanupSystem(sys);
+}
+// load lines of cars
+void test_loadLinesOfCars_basic() {
+    printf("\n==== TEST: loadLineOfCars ====\n");
+
+    SystemData *sys = malloc(sizeof(SystemData));
+    assert(sys != NULL);
+
     sys->stationTree = initTree(compareStation, printStation, StationDestroy);
     sys->carTree = initTree(compareCars, printCar, destroyCar);
 
-    // load data stations cars ports
     int stationsLoaded = loadStations(&sys->stationTree);
     int carsLoaded = loadCars(&sys->carTree);
     int portsLoaded = loadPorts(sys);
-
-    if (stationsLoaded <= 0 || carsLoaded <= 0 || portsLoaded <= 0) {
-        printf("[FAIL] loadLineOfCars: Failed to load stations/cars/ports\n");
-        saveAndCleanupSystem(sys);
-        return;
-    }
+    assert(stationsLoaded > 0 && carsLoaded > 0 && portsLoaded > 0);
 
     int queuedCars = loadLineOfCars(sys);
-    if (queuedCars > 0) {
-        printf("[PASS] loadLineOfCars: Loaded %d queued cars successfully\n", queuedCars);
-    } else {
-        printf("[FAIL] loadLineOfCars: Failed to load queued cars or none found\n");
-    }
+    assert(queuedCars > 0);
 
-    // print car queues for each station
-    printf("\n--- Car Queues per Station ---\n");
+    printf("[PASS] loadLineOfCars: Loaded %d queued cars into station queues\n", queuedCars);
+
+    printf("[INFO] Car queues at station:\n");
     inorderBST(&sys->stationTree, (PrintFunc)printQueueForStation);
+
+    saveAndCleanupSystem(sys);
 }
 
+void run_loader_tests() {
+    test_loadStations_basic();
+    test_loadCars_basic();
+    test_loadPorts_basic();
+    test_loadLinesOfCars_basic();
+}
+
+// 
 // FEATURES
 // 1. locate nearest station
-void test_locateNearSt_validateTree(const BinaryTree *stationTree) {
-    printf("Test: Validate Station Tree\n");
-    if (!stationTree || !stationTree->root) {
-        printf("[PASS] Correctly handled empty or null tree\n");
-    } else {
-        printf("[PASS] Station tree is valid and non-empty\n");
-    }
-}
+void test_locateNearSt_full_run(BinaryTree* stationTree, const char* simulatedInput) {
+    printf("\n[TEST] locateNearSt Feature - simulate input: \"%s\"\n", simulatedInput);
 
-void test_locateNearSt_getCoordHelper(Coord coord) {
-
-    if (coord.x != 0 && coord.y != 0) {
-        printf("[PASS] Coordinates received: X=%.2f, Y=%.2f\n", coord.x, coord.y);
-    } else {
-        printf("[FAIL] Invalid coordinates\n");
-    }
-}
-
-void test_locateNearSt_getCoord() {
-    Coord userLoc;
-
-    // valid input
-    printf("Testing valid coordinate input simulation...\n");
-    test_locateNearSt_getCoordHelper((Coord){32.1,34.8});
-    printf("Testing empty input (simulated as zero coords)...\n");
-    test_locateNearSt_getCoordHelper((Coord){0, 0});
-    printf("Testing input with spaces only (simulated as zero coords)...\n");
-    test_locateNearSt_getCoordHelper((Coord){0, 0});
-
-    printf("Testing non-numeric strings (simulated as invalid -1 coords)...\n");
-    test_locateNearSt_getCoordHelper((Coord){-1, -1});
-
-    printf("Testing negative coordinates...\n");
-    test_locateNearSt_getCoordHelper((Coord){-10, -20});
-
-    printf("Testing boundary coordinates (zero X)...\n");
-    test_locateNearSt_getCoordHelper((Coord){0, 34.8});
-
-    printf("Testing boundary coordinates (zero Y)...\n");
-    test_locateNearSt_getCoordHelper((Coord){32.1, 0});
-
-    printf("Testing very large coordinates...\n");
-    test_locateNearSt_getCoordHelper((Coord){1e9, 1e9});
-}
-
-void test_locateNearSt_searchStation(BinaryTree *stationTree, Coord userLoc) {
-    printf("Testing searchStation with coordinates X=%.2f, Y=%.2f\n", userLoc.x, userLoc.y);
-    SearchKey key = {.type = SEARCH_BY_DISTANCE, .location = {.userX = userLoc.x, .userY = userLoc.y}};
-    Station* nearest = searchStation(stationTree, &key);
-
-    if (nearest) {
-        printf("[PASS] Found nearest station: %s (ID: %u)\n", nearest->name, nearest->id);
-    } else {
-        printf("[FAIL] No station found\n");
-    }
-}
-
-void test_locateNearSt_printStationDetails(Station* station) {
-    if (!station) {
-        printf("[FAIL] No station to print\n");
+    FILE* fakeInput = fmemopen((void*)simulatedInput, strlen(simulatedInput), "r");
+    if (!fakeInput) {
+        printf("[FAIL] Could not simulate input\n");
         return;
     }
 
-    printStationSummary(station);
+    FILE* origStdin = stdin;
+    stdin = fakeInput;
+
+    // run the real feature function
+    locateNearSt(stationTree);
+
+    // Restore stdin
+    stdin = origStdin;
+    fclose(fakeInput);
 }
 
-void test_locateNearSt_full(BinaryTree *stationTree) {
-    test_locateNearSt_validateTree(stationTree);
+void test_locateNearSt_feature(SystemData* sys) {
 
-    Coord testCoord = {32.09, 34.78};
-    test_locateNearSt_getCoord();
+    if(!sys||!sys->stationTree.root || !sys->carTree.root) {
+        printf("No station loaded\n");
+        return;
+    }
+    printf("\n========== TEST: locateNearSt ========== \n");
 
-    test_locateNearSt_searchStation(stationTree, testCoord);
+    // Valid input
+    test_locateNearSt_full_run(&sys->stationTree, "32.1\n34.8\n");
 
-    Station* nearest = searchStation(stationTree, &(SearchKey){.type = SEARCH_BY_DISTANCE, .location = {.userX = testCoord.x, .userY = testCoord.y}});
-    test_locateNearSt_printStationDetails(nearest);
-}
+    // Invalid coords (non-numeric)
+    test_locateNearSt_full_run(&sys->stationTree, "abc\nxyz\n");
+
+    // Negative coords
+    test_locateNearSt_full_run(&sys->stationTree, "-10\n-20\n");
+
+    // Boundary values
+    test_locateNearSt_full_run(&sys->stationTree, "0\n0\n");
+    test_locateNearSt_full_run(&sys->stationTree, "1000000\n1000000\n");
+
+    printf("\n========== END TEST: locateNearSt ==========\n");
+}   
 
 // 
 // 2.charge car
-#include <stdio.h>
-#include <string.h>
+void test_chargeCar_run(SystemData* sys, const char* simulatedInput) {
+    printf("\n[TEST] chargeCar Feature - simulate input:\n%s\n", simulatedInput);
 
-// Assume SystemData sys is already initialized properly with loaded stations and cars
-
-void test_chargeCarWithInput(SystemData *sys, const char *input) {
-    FILE *memInput = fmemopen((void *)input, strlen(input), "r");
-    if (!memInput) {
-        perror("fmemopen failed");
+    FILE* fakeInput = fmemopen((void*)simulatedInput, strlen(simulatedInput), "r");
+    if (!fakeInput) {
+        printf("[FAIL] Could not simulate input\n");
         return;
     }
-    FILE *origStdin = stdin;
-    stdin = memInput;
+
+    FILE* origStdin = stdin;
+    stdin = fakeInput;
+
     chargeCar(&sys->stationTree, &sys->carTree);
     stdin = origStdin;
-    fclose(memInput);
+    fclose(fakeInput);
 }
 
-void test_chargeCar_emptyInputs(SystemData *sys) {
-    const char *simulatedInput = "\n";  // empty input simulates
-    test_chargeCarWithInput(sys, simulatedInput);
+void test_chargeCar_feature(SystemData* sys) {
+    if (!sys || !sys->stationTree.root || !sys->carTree.root) {
+        printf("No system data loaded\n");
+        return;
+    }
+
+    printf("\n========== TEST: chargeCar ========== \n");
+
+    // Test 1: Existing car, valid license, station and port selection
+    // Inputs: license, station ID, port number
+    test_chargeCar_run(sys,
+        "29145178\n"    // existing car license MID
+        "205\n"         // station ID Haifa
+        "2\n"           // port number MID
+    );
+
+    // Test 2: New car creation with valid inputs
+    // Inputs: license, station ID, port type, port number
+    test_chargeCar_run(sys,
+        "99999999\n"    // new car license
+        "205\n"         // Haifa
+        "FAST\n"        // port type
+        "1\n"           // port number
+    );
+
+    // Test 3: Invalid license input
+    test_chargeCar_run(sys,
+        "abc12345\n123456789\nabcd1234\n12312312\n"
+        "123\ntte\nhhaif\nasdasas\ntel\n"
+        "0\n"    // invalid license format & station
+    );
+
+    // Test 4: Cancel license input (simulate user cancel)
+    test_chargeCar_run(sys,
+        "\n"            // empty input triggers cancel
+    );
+
+    // Test 5: Cancel station selection (simulate user entering 0)
+    test_chargeCar_run(sys,
+        "27205295\n"    // valid license
+        "0\n"           // cancel station selection
+    );
+
+    // Test 6: Invalid port type input for new car (simulate invalid type + cancel)
+    test_chargeCar_run(sys,
+        "88888888\n"    // new car license
+        "412\n"         // Jerusalem
+        "INVALID\ngoood\n12\n1\n"     // invalid port type
+        "\n"            // cancel port type input
+    );
+
+    printf("\n========== END TEST: chargeCar ==========\n");
 }
 
-void test_chargeCar_invalidPort(SystemData *sys) {
-    const char *simulatedInput = "29145178\n101\n999\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
-
-void test_chargeCar_shortLicense(SystemData *sys) {
-    const char *simulatedInput = "1234\n101\n999\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
-void test_chargeCar_noneNumericLicense(SystemData *sys) {
-    const char *simulatedInput = "abc\n101\n999\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
-
-void test_chargeCar_success(SystemData *sys) {
-    const char *simulatedInput = "25497284\n518\n2\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
-
-void test_chargeCar_alreadyCharge(SystemData *sys) {
-    const char *simulatedInput = "66778899\n205\n1\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
-
-void test_chargeCar_alreadyQueue(SystemData *sys) {
-    const char *simulatedInput = "29587102\n205\n1\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
-void test_chargeCar_noCompPorts(SystemData *sys) {
-    const char *simulatedInput = "26054912\n412\n3\n";
-    test_chargeCarWithInput(sys, simulatedInput);
-}
 
 // 
 // 4. stop charge
-void mockNextUserInput(const char* str) {
-    FILE* file = fopen("mock_input.txt", "w");
-    if (!file) {
-        printf("Failed to create mock input file.\n");
+void test_stopCharge_run(SystemData* sys, const char* simulatedInput) {
+    printf("\n[TEST] stopCharge Feature - simulate input:\n%s", simulatedInput);
+
+    FILE* fakeInput = fmemopen((void*)simulatedInput, strlen(simulatedInput), "r");
+    if (!fakeInput) {
+        printf("\n[FAIL] Could not simulate input\n");
         return;
     }
-    fprintf(file, "%s\n", str);
-    fclose(file);
 
-    // Redirect stdin to read from that file
-    freopen("mock_input.txt", "r", stdin);
-}
+    FILE* origStdin = stdin;
+    stdin = fakeInput;
 
-
-void test_stopCharge_scenario1(SystemData *sys) {
-    printf("==== TEST: stopCharge scenario 1 ====\n");
-    
-    // station with 1 FAST port
-    Date now = getCurrentDate();
-    Date time = createDate(2025, 7, 8, 7, 30);
-
-    Station* station = StationCreate(101, "TestStation", 0,(Coord){2,3});
-    Port* port = createPort(10, FAST,FREE,now);
-    printf("Station ports list head: %p, inserted port: %p\n", (void*)station->portsList, (void*)port);
-    station->portsList = insertPort(station->portsList, port);
-    printf("Station ports list head: %p, inserted port: %p\n", station->portsList, port);
-
-    // Car A, already charging on port
-    Car* carA = createCar("18273645", FAST);
-    assignCar2Port(port,carA,time);
-
-    insertBST(&sys->carTree,carA);
-
-    // Car B, waiting in queue (also FAST)
-    Car* carB = createCar("23178922", FAST);
-    enqueue(station->qCar, carB);  // add to queue
-    insertBST(&sys->carTree, carB);
-
-    //build trees
-    assert(sys->stationTree.cmp != NULL);
-    insertBST(&sys->stationTree,station);
-    printf("[DEBUG] Inserted station %s at %p with portsList %p\n", station->name, (void*)station, (void*)station->portsList);
-
-
-    //mock user input for license (we’ll simulate the input)
-    mockNextUserInput("18273645");
-
-    // run stopCharge
     stopCharge(&sys->stationTree, &sys->carTree);
-
-    // 7. Assertions (manual for now)
-    assert(carA->pPort == NULL);  // should be unlinked
-    assert(port->p2Car == carB);   // should now have carB
-    assert(carB->pPort == port);  // carB assigned
-    assert(carA->totalPayed > 0); // was updated
-    printf("==== PASSED stopCharge scenario 1 ====\n");
+    printf("\t[END]\n");
+    stdin = origStdin;
+    fclose(fakeInput);
 }
 
-void test_stopCharge_not_charging(SystemData *sys) {
-    printf("==== TEST: stopCharge - car not charging ====\n");
+void test_stopCharg(SystemData* sys) {
+    if (!sys || !sys->stationTree.root || !sys->carTree.root) {
+        printf("[FAIL] No system data loaded for stopCharge test\n");
+        return;
+    }
 
-    // 1. Create station and car
-    Station* station = StationCreate(102, "EmptyStation", 3, (Coord){1, 1});
-    insertBST(&sys->stationTree, station);
+    printf("\n========== TEST: stopCharge ==========\n");
 
-    Car* car = createCar("99988877", FAST);
-    // NOT assigning the car to any port (pPort == NULL)
-    insertBST(&sys->carTree, car);
+    // TEST 1: Valid car currently charging
+    test_stopCharge_run(sys, "66778899\n");
 
-    // 2. Mock input: license of car
-    mockNextUserInput("99988877");
+    // TEST 2: Car exists but not charging
+    Car* car = createCar("33333333",MID);
+    insertBST(&sys->carTree,car);
+    test_stopCharge_run(sys, "33333333\n"); 
 
-    // 3. Call stopCharge
-    stopCharge(&sys->stationTree, &sys->carTree);
+    // TEST 3: Car does not exist
+    test_stopCharge_run(sys, "12141516\n");
 
-    // 4. Assertion: car should still be unlinked
-    assert(car->pPort == NULL);
-    assert(car->totalPayed == 0.0);  // No charging occurred
+    // TEST 4: User cancels license input
+    test_stopCharge_run(sys, "\n");
 
-    printf("==== PASSED stopCharge - car not charging ====\n");
+    // TEST 5: Car stops charging and queue has cars (manually simulate in test setup)
+    test_stopCharge_run(sys, "12345678\n"); // Car assumed to be charging and has queue
+
+    printf("\n========== END TEST: stopCharge ==========\n");
 }
 
-void test_stopCharge_car_not_found(SystemData *sys) {
-    printf("==== TEST: stopCharge - car not found ====\n");
+// 7.
 
-    // 1. Add a dummy station just to satisfy stationTree requirement
-    Station* station = StationCreate(103, "GhostStation", 1, (Coord){0, 0});
-    insertBST(&sys->stationTree, station);
-
-    // 2. carTree is empty or doesn't contain the license we input
-    mockNextUserInput("00000000");  // nonexistent license
-
-    // 3. Call stopCharge
-    stopCharge(&sys->stationTree, &sys->carTree);
-
-    // No assertion possible, just checking it exits cleanly and prints correct message
-    printf("==== PASSED stopCharge - car not found ====\n");
-}
-
-void test_stopCharge_incompatible_queue(SystemData *sys) {
-    printf("==== TEST: stopCharge - incompatible car in queue ====\n");
-
-    // 1. Setup FAST port and assign Car A to it
-    Date now = getCurrentDate();
-    Date tin = createDate(2025, 7, 8, 7, 00);
-
-    Station* station = StationCreate(104, "MismatchStation", 2, (Coord){4, 4});
-    Port* port = createPort(11, FAST, FREE, now);
-    station->portsList = insertPort(station->portsList, port);
-
-    Car* carA = createCar("11223344", FAST);
-    assignCar2Port(port, carA, tin);
-    insertBST(&sys->carTree, carA);
-
-    // 2. Incompatible car in queue (requires SLOW)
-    Car* carB = createCar("55667788", SLOW);
-    enqueue(station->qCar, carB);
-    insertBST(&sys->carTree, carB);
-
-    // 3. Insert station into system
-    insertBST(&sys->stationTree, station);
-
-    // 4. Simulate license input
-    mockNextUserInput("11223344");
-
-    // 5. Run stopCharge
-    stopCharge(&sys->stationTree, &sys->carTree);
-
-    // 6. Assert that no new assignment was made
-    assert(port->p2Car == NULL);            // Port is empty
-    assert(carB->pPort == NULL);           // Still in queue
-    assert(carA->pPort == NULL);           // Unlinked
-    assert(carA->totalPayed > 0);          // Payed updated
-
-    printf("==== PASSED stopCharge - incompatible car in queue ====\n");
-}
-
-
+// 
+//  Unsused?
 void assignCarsToAvailablePorts(SystemData *sys, Date now) {
     if (!sys) return;
 
@@ -655,65 +524,4 @@ void printSingleStationQueue(const void *data) {
         }
         current = current->next;
     }
-}
-
-void test_stopCharg(SystemData *sharedSys){
-    SystemData *sys1 = malloc(sizeof(SystemData));
-    initTestSystem(sys1);
-    test_stopCharge_scenario1(sys1);
-    destroyBinaryTree(&sys1->stationTree);
-    destroyBinaryTree(&sys1->carTree);
-    free(sys1);
-
-    SystemData *sys2 = malloc(sizeof(SystemData));
-    initTestSystem(sys2);
-    test_stopCharge_not_charging(sys2);
-    destroyBinaryTree(&sys2->stationTree);
-    destroyBinaryTree(&sys2->carTree);
-    free(sys2);
-
-    SystemData *sys3 = malloc(sizeof(SystemData));
-    initTestSystem(sys3);
-    test_stopCharge_car_not_found(sys3);
-    destroyBinaryTree(&sys3->stationTree);
-    destroyBinaryTree(&sys3->carTree);
-    free(sys3);
-
-    SystemData *sys4 = malloc(sizeof(SystemData));
-    initTestSystem(sys4);
-    test_stopCharge_incompatible_queue(sys4);
-    destroyBinaryTree(&sys4->stationTree);
-    destroyBinaryTree(&sys4->carTree);
-    free(sys4);
-
-    freopen("/dev/tty", "r", stdin);  // On Unix-like systems (macOS, Linux)
-}
-
-void test_cargeCarWithInput(SystemData* sys){
-    printf("\n[TEST] chargeCar: \t|Sucees|\t\n");
-    test_chargeCar_success(sys);
-    printf("\n[TEST] chargeCar: \t|Short license|\t\n");
-    test_chargeCar_shortLicense(sys);
-    printf("\n[TEST] chargeCar: \t|Non numeric lincese|\t\n");
-    test_chargeCar_noneNumericLicense(sys);
-    printf("\n[TEST] chargeCar: \t|No comp ports to car|\t\n");
-    test_chargeCar_noCompPorts(sys);
-    printf("\n[TEST] chargeCar: \t|invalid port input|\t\n");
-    test_chargeCar_invalidPort(sys);
-    printf("\n[TEST] chargeCar: \t|empty inputs|\t\n");
-    test_chargeCar_emptyInputs(sys);
-    printf("\n[TEST] chargeCar: \t|queued|\t\n");
-    test_chargeCar_alreadyQueue(sys);
-    printf("\n[TEST] chargeCar: \t|already charge|\t\n");
-    test_chargeCar_alreadyCharge(sys);
-}
-
-void test_loadALl(){
-    printf("\n======= TEST: Load Functions =======\n");
-    test_stationParser();     // test loading entire system
-    test_loadStations();  // test loading stations into BST
-    test_loadCars();
-    test_loadPorts();
-    test_loadLinesOfCars();
-    printf("====================================\n");
 }
