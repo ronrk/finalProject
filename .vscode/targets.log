@@ -6,11 +6,8 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # PARTICULAR PURPOSE.
 
 # This program built for i386-apple-darwin11.3.0
- 
-make: *** No rule to make target `all'.  Stop.
 
-
-# Make data base, printed on Wed Jul  9 11:40:22 2025
+# Make data base, printed on Wed Jul  9 22:49:44 2025
 
 # Variables
 
@@ -45,7 +42,6 @@ PATH = /usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbi
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # default
- 
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
 SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.inPgkWlXtj/Listeners
@@ -134,7 +130,7 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 87751
+VSCODE_PID = 91921
 # variable set hash-table stats:
 # Load=60/1024=6%, Rehash=0, Collisions=1/80=1%
 
@@ -208,7 +204,6 @@ GNUmakefile:
 # files hash-table stats:
 # Load=6/1024=1%, Rehash=0, Collisions=0/17=0%
 # VPATH Search Paths
- 
 
 # No `vpath' search paths.
 
@@ -219,6 +214,8 @@ GNUmakefile:
 # strcache size: total = 0 / max = 0 / min = 4096 / avg = 0
 # strcache free: total = 0 / max = 0 / min = 4096 / avg = 0
 
-# Finished Make data base on Wed Jul  9 11:40:22 2025
+# Finished Make data base on Wed Jul  9 22:49:44 2025
 
  
+make: *** No rule to make target `all'.  Stop.
+

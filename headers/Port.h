@@ -33,11 +33,15 @@ Port *insertPort(Port *head, Port *newPort);
 // assign car2Port
 BOOL assignCar2Port(Port *port, Car *car, Date date);
 // unlink carPort
-void unlinkCarPort(Car* car);
+void unlinkCarPort(Car* car, double bill);
 void tryAssignNextCarFromQueue(Station *station, Port *port, Date now);
 
 // find port by num
 Port *findPort(Port *head, unsigned int num);
+
+int getOutOrderPortNum(Port *port);
+
+void removePortFromStation(Station *station, unsigned int portNum);
 
 void printPortList(Port *head);
 void printPort(const Port *port);
@@ -56,6 +60,8 @@ BOOL isPortAvailable(Port *port);
 
 // validate port
 BOOL isPortTypeValid(const char *pTypeKey);
+
+int calculateChargeTime(Port* port);
 
 // find available port
 // Port *findAvailablePort(Port *portList, PortType type);

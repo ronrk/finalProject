@@ -101,7 +101,6 @@ void linkPortToStation(void*obj, void*context) {
   }
 
   Port* port = temp->port;
-
   // 1.find the station for this port
   SearchKey key = {.type = SEARCH_BY_ID,.id = temp->stationId};
   Station* station = searchStation(&sys->stationTree, &key);
@@ -112,13 +111,16 @@ void linkPortToStation(void*obj, void*context) {
   }
   
   // 2.add port to station
-  addPortToStation(station,temp->port);
+  addPortToStation(station,temp->port,FALSE);
 
   // 3.link car to port
   if (isLicenseValid(temp->license)) {
     Car* car = searchCar(&sys->carTree, temp->license);
-    if (car) {
-      assignCar2Port(port,car,port->tin);
+    if (car&& port->status == OCC) {
+      port->p2Car = car;
+      port->status = OCC;
+      car->pPort = port;
+      car->inqueue = 0;
     } else {
       displayError(ERR_LOADING_DATA, "[linkPortToStation] Car not found for assignment");
     }

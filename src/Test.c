@@ -3,67 +3,40 @@
 #include "Menu.h"
 #include "SystemData.h"
 #include "BinaryTree.h"
+#include "ErrorHandler.h"
 #include "Utilis.h"
 #include <assert.h>
 #include <stdio.h>
 
 
-// Test function
-void testQueueOperations() {
-    // Create queue
-    qCar *queue = createQueue();
-    if (!queue) {
-        printf("Failed to create queue\n");
-        return;
+// static
+static BOOL getLicenseFromUser(char *input,size_t size) {
+  while (1)
+  {
+    /* code */
+    if(!getInputAndCancel(input,size,"Enter car license number (8 digits): ")) {
+      displayError(UI_WARNING,"Canceled by user");
+      return FALSE;
     }
 
-    // Create some test cars
-    Car car1 = {.nLicense = "12345678", .portType = FAST};
-    Car car2 = {.nLicense = "87654321", .portType = SLOW};
-    Car car3 = {.nLicense = "23145768", .portType = FAST};
-    Car car4 = {.nLicense = "23513684", .portType = SLOW};
-
-    // Enqueue cars
-    enqueue(queue, &car1);
-    enqueue(queue, &car2);
-    enqueue(queue, &car3);
-    enqueue(queue, &car4);
-
-    printf("Queue after enqueueing 4 cars:\n");
-    printQueue(queue);
-
-    // Dequeue one car normally (FIFO)
-    Car *dCar = dequeue(queue);
-    if (dCar) {
-        printf("Dequeued car (FIFO): %s\n", dCar->nLicense);
+    if(!isLicenseValid(input)) {
+      displayError(UI_WARNING,"Invalid license format. Try again");
+      continue;
     }
+    return TRUE;
+  }
 
-    printf("Queue after dequeue FIFO:\n");
-    printQueue(queue);
-
-    // Dequeue by port type FAST
-    Car *dCarFast = dequeueByPortType(queue, FAST);
-    if (dCarFast) {
-        printf("Dequeued car by port type FAST: %s\n", dCarFast->nLicense);
-    } else {
-        printf("No car with port type FAST found to dequeue.\n");
-    }
-
-    printf("Queue after dequeue by port type FAST:\n");
-    printQueue(queue);
-
-    // Cleanup
-    destroyQueue(queue);
 }
 
-void printStationPorts(const void *data) {
+
+static void printStationPorts(const void *data) {
     if (!data) return;
     const Station *station = (const Station *)data;
     printf("--- Ports for Station %s (ID: %d) ---\n", station->name, station->id);
     printPortList(station->portsList);
 }
 
-void printQueueForStation(const Station* station) {
+static void printQueueForStation(const Station* station) {
     if (!station) return;
 
     printf("Station %s (ID: %u):\n", station->name, station->id);
@@ -79,6 +52,9 @@ void printQueueForStation(const Station* station) {
     }
     printf("------\n");
 }
+
+
+// Test function
 
 // Helper function to print queue contents
 
@@ -204,7 +180,7 @@ void run_loader_tests() {
 // FEATURES
 // 1. locate nearest station
 void test_locateNearSt_full_run(BinaryTree* stationTree, const char* simulatedInput) {
-    printf("\n[TEST] locateNearSt Feature - simulate input: \"%s\"\n", simulatedInput);
+    printf("\n[TEST] locateNearSt Feature - simulate input: \n%s\n", simulatedInput);
 
     FILE* fakeInput = fmemopen((void*)simulatedInput, strlen(simulatedInput), "r");
     if (!fakeInput) {
@@ -399,6 +375,8 @@ void test_addNewPort_feature(SystemData*sys){
         return;
     }
 
+    printf("\n========== TEST: addNewPort ==========\n");
+
     // TEST 1: valid input (station by id) + valid port type
     test_addNewPort_run(sys, "101\nFAST\n"); // add FAST port to 101
 
@@ -423,152 +401,15 @@ void test_addNewPort_feature(SystemData*sys){
     printf("\n========== END TEST: addNewPort ==========\n");
 }
 
+
+// run all tests
+void test_runAllTests(SystemData *sys) {
+    printf("\n====================TEST:Run All Features====================\n");
+    test_locateNearSt_feature(sys);
+    test_chargeCar_feature(sys);
+    test_stopCharg(sys);
+    test_addNewPort_feature(sys);
+
+    printf("\n====================END:Run All Features====================\n");
+}
 // 
-//  Unsused?
-void assignCarsToAvailablePorts(SystemData *sys, Date now) {
-    if (!sys) return;
-
-    TreeNode *stack[100];
-    int top = -1;
-    TreeNode *current = sys->stationTree.root;
-
-    while (current || top >= 0) {
-        while (current) {
-            stack[++top] = current;
-            current = current->left;
-        }
-
-        current = stack[top--];
-        Station *station = (Station *)current->data;
-        printf("🚏 Checking station: %s (ID: %u)\n", station->name, station->id);
-
-        if (station->portsList == NULL) {
-          printf("⚠️  No ports found for station %u\n", station->id);
-        }
-
-        Port *p = station->portsList;
-        while (p) {
-          printf("🔌 Port %u (%s) is %s\n",
-                p->num, portTypeToStr(p->portType),
-                isPortAvailable(p) ? "AVAILABLE" : "OCCUPIED");
-            if (isPortAvailable(p)) {
-                Car *car = dequeueByPortType(station->qCar, p->portType);
-                if (car) {
-                  printCarQueue(station->qCar, station->name);
-                    if (assignCar2Port(p, car, now)) {
-                        printf("✅ Assigned car %s to port %u (%s) at station %u\n",
-                            car->nLicense, p->num, portTypeToStr(p->portType), station->id);
-                    } else {
-                        printf("❌ Failed to assign car %s to port %u\n", car->nLicense, p->num);
-                    }
-                } else {
-                    printf("⚠️ No car in queue matching port type %s\n", portTypeToStr(p->portType));
-                }
-            }
-            p = p->next;
-        }
-
-        current = current->right;
-    }
-}
-
-void printCarQueue(qCar* queue, const char* stationName) {
-    if (!queue || !queue->front) {
-        printf("[Queue] Station %s queue is EMPTY.\n", stationName);
-        return;
-    }
-    CarNode* current = queue->front;
-    printf("[Queue] Station %s cars in queue:\n", stationName);
-    while (current) {
-        printf("  Car %s, PortType %s\n", current->data->nLicense, portTypeToStr(current->data->portType));
-        current = current->next;
-    }
-}
-
-void testStopCharge(BinaryTree* stationTree, BinaryTree* carTree) {
-  printf("\n=== TEST: Stop Charge Simulation ===\n");
-
-  char license[LICENSE_SIZE];
-  if (!getLicenseFromUser(license, sizeof(license))) {
-    printf("Canceled.\n");
-    return;
-  }
-
-  Car* car = searchCar(carTree, license);
-  if (!car) {
-    printf("Car not found.\n");
-    return;
-  }
-
-  if (!car->pPort) {
-    printf("Car is not charging.\n");
-    return;
-  }
-
-  printf("Found car %s currently charging...\n", car->nLicense);
-  printf("Simulating stop charge and checking queue assignment...\n");
-
-  processStopCharge(car, stationTree);
-}
-
-void destroyBinaryTree(BinaryTree *tree) {
-    if (!tree) return;
-    destroyTree(tree->root, tree->destroy);
-    tree->root = NULL;  // Optional: avoid dangling pointer
-}
-
-
-void testLoadFiles(){
-  SystemData *data = loadFiles();
-  if (!data) {
-    printf("❌ loadFiles() failed.\n");
-    return;
-  }
-  printf("✅ System data loaded successfully!\n");
-
-  // 1. number of stations
-  int numStations = countNodes(data->stationTree.root);
-  printf("Stations loaded: %d\n", numStations);
-
-  // 2. show number of cars
-  int numCars = countNodes(data->carTree.root);
-  printf("Cars loaded: %d\n", numCars);
-
-  // 3. check if ports and queues exist
-  printf("Checking ports and queues:\n");
-  inorderBST(&data->stationTree, printStationSummary);
-
-  // 4. Clean up
-  saveAndCleanupSystem(data);
-  printf("🧹 System cleaned up successfully\n");
-}
-
-void printStationQueues(SystemData *sys) {
-    if (!sys) return;
-
-    printf("=== Station Queues ===\n");
-    inorderBST(&sys->stationTree, printSingleStationQueue);
-    printf("======================\n");
-}
-
-void printSingleStationQueue(const void *data) {
-    const Station *station = (const Station *)data;
-    if (!station) return;
-
-    printf("Station %u - %s queue:\n", station->id, station->name);
-
-    qCar *queue = station->qCar;
-    if (!queue || isEmpty(queue)) {
-        printf("  [Empty]\n");
-        return;
-    }
-
-    CarNode *current = queue->front;
-    while (current) {
-        Car *car = current->data;
-        if (car) {
-            printf("  - %s\n", car->nLicense);
-        }
-        current = current->next;
-    }
-}

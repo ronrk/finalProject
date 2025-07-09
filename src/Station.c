@@ -143,14 +143,25 @@ void *Station_parseLine(const char *line)
   return station;
 }
 
-void addPortToStation(Station *station, Port *port)
+void addPortToStation(Station *station, Port *port, BOOL increment)
 {
   if (!station || !port)
   {
     return;
   }
+
   station->portsList = insertPort(station->portsList, port);
-  station->nPorts++;
+  if (increment) station->nPorts++;
+
+  // count how many ports really in the linked list now
+  int actualCount = 0;
+  Port *cur = station->portsList;
+  while (cur)
+  {
+    actualCount++;
+    cur = cur->next;
+  }
+
 }
 
 // search station

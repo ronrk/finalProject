@@ -71,13 +71,13 @@ BOOL assignCar2Port(Port* port, Car* car, Date startTime) {
 
 }
 
-void unlinkCarPort(Car* car){
+void unlinkCarPort(Car* car, double bill){
   if(!car||!car->pPort) return;
-
   Port *port = car->pPort;
   port->status = FREE;
   port->p2Car = NULL;
   car->pPort = NULL;
+  car->totalPayed += bill;
 }
 
 void tryAssignNextCarFromQueue(Station *station, Port *port, Date now) {
@@ -93,14 +93,13 @@ void tryAssignNextCarFromQueue(Station *station, Port *port, Date now) {
   if(nextCar){
     printf("Next compatible car in queue: %s\n", nextCar->nLicense);
     if(assignCar2Port(port,nextCar,now)){
-      printf("Assigned car %s to port %u at station %s.\n", nextCar->nLicense, port->num, station->name);
+      printf("Assigned car %s to port %u at station %s.\n\n", nextCar->nLicense, port->num, station->name);
     } else {
-      printf("failed to assign car\n");
       enqueue(station->qCar,nextCar);
       nextCar->inqueue = TRUE;
     }
   } else {
-    printf("No compatible car in queue with port type %s\n",portTypeToStr(port->portType));
+    // printf("No compatible car in queue with port type %s\n\n",portTypeToStr(port->portType));
   }
 
 }
@@ -143,7 +142,6 @@ void printPortList(Port *head) {
 void printPort(const Port* port) {
 
   printf("| Port Number: %u  ,  Type: %s  ,  Status: %s |\n",port->num,portTypeToStr(port->portType),statusToStr(port->status));
-
 }
 
 void destroyPortList(Port *head) {
@@ -200,6 +198,46 @@ int getNextPortNum(Station* station){
   }
   
   return nextPortNum;
+}
+
+int calculateChargeTime(Port* port){
+  return 0;
+}
+
+int getOutOrderPortNum(Port *port) {
+  if(port && port->status == OOD) {
+    return port->num;
+  }
+  return -1;
+}
+
+void removePortFromStation(Station *station, unsigned int portNum)
+{
+    if (!station || !station->portsList) return;
+
+    Port *current = station->portsList;
+    Port *prev = NULL;
+
+    
+    while (current) {      
+      if (current->num == portNum) {        
+        // found port to remove
+        if (prev) {
+          prev->next = current->next;
+        } else {
+          // removing head
+          station->portsList = current->next;
+        }
+        station->nPorts--;
+        destroyPort(current); // free memory
+        return;
+        }
+        prev = current;
+        current = current->next;
+    }
+
+    // if not found, you might print a warning
+    // printf("Port #%u not found in station %s\n", portNum, station->name);
 }
 
 

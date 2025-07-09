@@ -19,6 +19,7 @@ void testStopCharge(BinaryTree* stationTree, BinaryTree* carTree);
 void initTestSystem(SystemData *sys);
 
 
+void test_runAllTests(SystemData *sys);
 void run_loader_tests();
 void run_parser_tests();
 void test_locateNearSt_feature(SystemData* sys);

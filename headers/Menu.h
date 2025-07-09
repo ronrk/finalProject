@@ -24,28 +24,18 @@ void locateNearSt(const BinaryTree *stationTree);
 
 // 2: Charge Car
 void chargeCar(BinaryTree *stationTree, BinaryTree *carTree);
-Station* getStationFromUser(const BinaryTree *stationTree);
-PortType getPortTypeFromUser(char * prompt);
-Port* getPortNumFromUser(Port* portList,const PortType portType);
-BOOL getLicenseFromUser(char *input,size_t size);
-int printCompatibleFreePorts(Port* head,PortType carType,char * stationName);
 
 // 3: Check Car Status
 void checkCarStatus(const BinaryTree* carTree,const BinaryTree* stationTree);
 
-
 // 4: Stop Charge
 void stopCharge(BinaryTree* stationTree,BinaryTree* carTree);
-void processStopCharge(Car *car,BinaryTree* stationTree);
-
 
 // 5. Display all stations
 void dispAllSt(BinaryTree* stationTree);
 
 // 6. display cars at station
 void dispCarsAtSt(BinaryTree* stationTree);
-void displayWaitingsCars(const Station* station);
-void displayChargingCars(const Station* station);
 
 // 7. Report of statistis, station
 void reportStStat(const BinaryTree* stationTree);

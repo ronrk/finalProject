@@ -36,7 +36,7 @@ unsigned int generateUniqueStationId(BinaryTree *tree);
 
 BOOL enqueueCarToStationQueue(Station *station, Car *car);
 
-void addPortToStation(Station *station, Port *port);
+void addPortToStation(Station *station, Port *port,BOOL increment);
 
 // search
 Station *searchStation(const BinaryTree *tree, SearchKey *key);
