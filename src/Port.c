@@ -220,7 +220,8 @@ void removePortFromStation(Station *station, unsigned int portNum)
 
     
     while (current) {      
-      if (current->num == portNum) {        
+      if (current->num == portNum) {  
+        printf("[DEBUG] Removing port #%u\n", portNum);     
         // found port to remove
         if (prev) {
           prev->next = current->next;
@@ -230,6 +231,7 @@ void removePortFromStation(Station *station, unsigned int portNum)
         }
         station->nPorts--;
         destroyPort(current); // free memory
+        printf("[DEBUG] station->nPorts = %d\n", station->nPorts);
         return;
         }
         prev = current;

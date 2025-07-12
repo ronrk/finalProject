@@ -26,5 +26,8 @@ void test_locateNearSt_feature(SystemData* sys);
 void test_chargeCar_feature(SystemData* sys);
 void test_stopCharg(SystemData* sys);
 void test_addNewPort_feature(SystemData*sys);
+void test_removeOutOrderPort_feature(SystemData* sys);
+void test_remCustomer_feature(SystemData* sys);
+void test_closeSt_feature(SystemData* sys);
 
 #endif

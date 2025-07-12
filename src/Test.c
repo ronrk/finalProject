@@ -402,6 +402,219 @@ void test_addNewPort_feature(SystemData*sys){
 }
 
 
+// 11. remove out of order ports
+void test_removeOutOfOrederPorts_run(SystemData* sys,const char* simulatedInput){
+    printf("\n[TEST]removeOutOrderPort feature - simulate input:\n%s\b",simulatedInput);
+
+    FILE* fakeInput = fmemopen((void*)simulatedInput,strlen(simulatedInput),"r");
+    if(!fakeInput) {
+        printf("[FAIL] Could not simulate input\n");
+        return;
+    }
+
+    FILE *origStdin = stdin;
+    stdin = fakeInput;
+
+    removeOutOrderPort(&sys->stationTree);
+
+    stdin = origStdin;
+    fclose(fakeInput);
+}
+
+void test_removeOutOrderPort_feature(SystemData* sys) {
+    if (!sys || !sys->stationTree.root) {
+        printf("[FAIL] No system data loaded for removeOutOrderPort test\n");
+        return;
+    }
+    printf("\n========== TEST: removeOutOrderPort ==========\n");
+
+
+    // TEST 1: valid removal by station ID
+    test_removeOutOfOrederPorts_run(sys,
+        "307\n"   // station ID: Beer Sheva North
+        "3\n"     // port num
+        "Y\n"     // confirm
+    );
+
+    // TEST 2: valid removal by station name
+    test_removeOutOfOrederPorts_run(sys,
+        "Beer Sheva North\n"
+        "3\n"
+        "y\n"
+    );
+
+    // TEST 3: user cancels at station selection
+    test_removeOutOfOrederPorts_run(sys,
+        "0\n"
+    );
+
+    // TEST 4: user cancels at port number selection
+    test_removeOutOfOrederPorts_run(sys,
+        "307\n"
+        "\n"      // cancel port input
+    );
+
+    // TEST 5: user cancels at confirmation
+    test_removeOutOfOrederPorts_run(sys,
+        "307\n"
+        "3\n"
+        "N\n"     // don't confirm
+    );
+
+    // TEST 6: invalid station input then valid
+    test_removeOutOfOrederPorts_run(sys,
+        "invalidStation\n"
+        "307\n"
+        "3\n"
+        "y\n"
+    );
+
+    // TEST 7: invalid port number then valid
+    test_removeOutOfOrederPorts_run(sys,
+        "307\n"
+        "999\n"  // port not found
+        "3\n"    // valid port
+        "y\n"
+    );
+
+
+    printf("\n========== END TEST: removeOutOrderPort ==========\n");
+
+}
+
+// 12. remove customer
+void test_removeCustomer_run(SystemData* sys, const char* simulatedInput){
+    printf("\n[TEST] remCustomer Feature - simulate input:\n%s\n", simulatedInput);
+
+    FILE* fakeInput = fmemopen((void*)simulatedInput,strlen(simulatedInput),"r");
+    if(!fakeInput){
+        printf("[FAIL] Could not simulate input\n");
+        return;
+    }
+
+    FILE* origStdin = stdin;
+    stdin = fakeInput;
+
+    remCustomer(&sys->carTree);  // call the actual feature
+
+    stdin = origStdin;
+    fclose(fakeInput);
+}
+
+void test_remCustomer_feature(SystemData* sys) {
+    if (!sys || !sys->carTree.root) {
+        printf("[FAIL] No system data loaded for remCustomer test\n");
+        return;
+    }
+
+    printf("\n========== TEST: remCustomer ==========\n");
+
+    // Test 1: Remove existing customer, confirm 'y'
+    test_removeCustomer_run(sys,
+        "26538849\n"    // car license
+        "y\n"           // confirm removal
+    );
+
+    // Test 2: Existing customer, but cancel removal
+    Car* car = createCar("55555555", MID); // add manually for test
+    insertBST(&sys->carTree, car);
+    test_removeCustomer_run(sys,
+        "55555555\n"    // license
+        "n\n"           // cancel removal
+    );
+
+    // Test 3: Non-existing customer
+    test_removeCustomer_run(sys,
+        "99999999\n"    // not in tree
+    );
+
+    // Test 4: Car currently charging
+    Car* chargingCar = createCar("77777777", MID);
+    insertBST(&sys->carTree, chargingCar);
+    Port dummyPort = { .num=1, .status=OCC };
+    chargingCar->pPort = &dummyPort; // mark as charging
+    test_removeCustomer_run(sys,
+        "77777777\n"
+    );
+
+    // Test 5: Car in queue
+    Car* queuedCar = createCar("88888888", MID);
+    insertBST(&sys->carTree, queuedCar);
+    queuedCar->inqueue = 1;
+    test_removeCustomer_run(sys,
+        "88888888\n"
+    );
+
+    // Test 6: Cancel license input (empty)
+    test_removeCustomer_run(sys,
+        "\n"
+    );
+
+    printf("\n========== END TEST: remCustomer ==========\n");
+}
+
+
+// close station
+void test_closeSt_run(SystemData* sys, const char* simulatedInput) {
+    printf("\n[TEST] closeSt Feature - simulate input:\n%s\n", simulatedInput);
+
+    FILE* fakeInput = fmemopen((void*)simulatedInput, strlen(simulatedInput), "r");
+    if (!fakeInput) {
+        printf("[FAIL] Could not simulate input\n");
+        return;
+    }
+
+    FILE* origStdin = stdin;
+    stdin = fakeInput;
+
+    closeSt(&sys->stationTree);
+
+    stdin = origStdin;
+    fclose(fakeInput);
+}
+
+void test_closeSt_feature(SystemData* sys) {
+    if (!sys || !sys->stationTree.root) {
+        printf("[FAIL] No system data loaded for closeSt test\n");
+        return;
+    }
+
+    printf("\n========== TEST: closeSt ==========\n");
+
+    // TEST 1: Remove existing station by ID, confirm with 'y'
+    test_closeSt_run(sys,
+        "101\n"     // station ID (Tel Aviv Center for example)
+        "y\n"       // confirm
+    );
+
+    // TEST 2: Remove existing station by name, confirm with 'Y'
+    test_closeSt_run(sys,
+        "Haifa Port\n"
+        "Y\n"
+    );
+
+    // TEST 3: Cancel at confirmation
+    test_closeSt_run(sys,
+        "205\n"     // station ID
+        "n\n"       // cancel remove
+    );
+
+    // TEST 4: Invalid station then valid, confirm remove
+    test_closeSt_run(sys,
+        "NotAStation\n"
+        "101\n"
+        "y\n"
+    );
+
+    // TEST 5: Cancel at station selection
+    test_closeSt_run(sys,
+        "0\n"
+    );
+
+    printf("\n========== END TEST: closeSt ==========\n");
+}
+
+
 // run all tests
 void test_runAllTests(SystemData *sys) {
     printf("\n====================TEST:Run All Features====================\n");
@@ -409,6 +622,9 @@ void test_runAllTests(SystemData *sys) {
     test_chargeCar_feature(sys);
     test_stopCharg(sys);
     test_addNewPort_feature(sys);
+    test_removeOutOrderPort_feature(sys);
+    test_remCustomer_feature(sys);
+    test_closeSt_feature(sys);
 
     printf("\n====================END:Run All Features====================\n");
 }

@@ -5,6 +5,7 @@
 #include "Port.h"
 #include "Utilis.h"
 #include "ErrorHandler.h"
+#include "Queue.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -330,8 +331,146 @@ int loadLineOfCars(SystemData *sys) {
   return fileLoader(&config);
 }
 
+// 
+// 
 // update files
-SystemData *updateFiles(){
+// save stations
+void saveStationLine(FILE* fp, Station* station){
+  if(!station) return;
+  fprintf(fp,"%u,%s,%d,%.2lf,%.2lf\n",station->id,station->name,station->nPorts,station->coord.x,station->coord.y);
+}
+void saveStationInorder(TreeNode* root, FILE* fp){
+  if(!root) return;
+  saveStationInorder(root->left,fp);
+  saveStationLine(fp,(Station*) root->data);
+  saveStationInorder(root->right,fp);
+}
+int saveStationToFile(TreeNode* root,const char* fileName){
+  FILE* fp = fopen(fileName,"w");
+  if(!fp){
+    perror("Failed to open stations file for writing");
+    return 0;
+  }
+  fprintf(fp, "ID,StationName,NumOfPorts,CoordX,CoordY\n");
+  saveStationInorder(root,fp);
+  fclose(fp);
 
-  return NULL;
+  return 1;
+}
+
+// save cars
+void saveCarLine(BinaryTree* stationTree,FILE* fp, Car* car){
+  unsigned int stationId = 0;
+  unsigned int portNum = 0;
+  const char* portType = portTypeToStr(car->portType);
+
+  if(car->pPort) {
+    portNum = car->pPort->num;
+    Station* station = findStationByCar(stationTree,car);
+    if(station) stationId = station->id;
+  }
+
+  Station* station = findStationByCar(stationTree,car);
+  fprintf(fp,"%s,%s,%.2lf,%u,%d,%d\n",
+  car->nLicense,portType,car->totalPayed,stationId,portNum,car->inqueue);
+}
+void saveCarInorder(TreeNode* root, FILE* fp,BinaryTree* stationTree){
+  if(!root) return;
+  saveCarInorder(root->left,fp,stationTree);
+  saveCarLine(stationTree,fp,(Car*) root->data);
+  saveCarInorder(root->right,fp,stationTree);
+}
+int saveCarToFile(TreeNode* root,const char* fileName,BinaryTree* stationTree){
+  FILE* fp = fopen(fileName,"w");
+  if(!fp){
+    perror("Failed to open cars file for writing");
+    return 0;
+  }
+  fprintf(fp, "License,PortType,TotalPayed,StationID,PortNumber,InQueue\n");
+  saveCarInorder(root,fp,stationTree);
+  fclose(fp);
+
+  return 1;
+}
+
+// save cars
+void savePortLine(FILE* fp, unsigned int stationId,Port* port){
+  const char* portType = portTypeToStr(port->portType);
+  const char* license = "-1";
+
+  if(port->p2Car) {
+    license = port->p2Car->nLicense;
+  }
+
+  fprintf(fp,"%d,%d,%s,%d,%d,%d,%d,%d,%d,%s\n",
+    stationId,port->num,portType,port->status,port->tin.year,port->tin.month,port->tin.day,port->tin.hour,port->tin.min,
+  license);
+}
+void savePortsInStation(TreeNode* root,FILE* fp){
+  if(!root) return;
+
+  savePortsInStation(root->left,fp);
+
+  Station*station = (Station*) root->data;
+  Port* current = station->portsList;
+
+  while(current){
+    savePortLine(fp,station->id,current);
+
+    current = current->next;
+  }
+
+  savePortsInStation(root->right,fp);
+}
+int savePortsToFile(TreeNode* root,const char* fileName){
+  FILE* fp = fopen(fileName,"w");
+  if(!fp){
+    perror("Failed to open cars file for writing");
+    return 0;
+  }
+  fprintf(fp, "StationID,PortNumber,PortType,Status,Year,Month,Day,Hour,Min,CarLicense\n");
+  savePortsInStation(root,fp);
+  fclose(fp);
+
+  return 1;
+}
+
+void saveQueueOfStations(FILE* fp, Station* station){
+  if(!station||!fp) return;
+  CarNode* current = station->qCar->front;
+  while (current)
+  {
+    fprintf(fp,"%s,%u\n",current->data->nLicense,station->id);
+    current= current->next;
+  }
+  
+}
+void saveAllQueueInOrder(TreeNode* root,FILE*fp){
+  if(!root) return;
+
+  saveAllQueueInOrder(root->left,fp);
+
+  Station* station = (Station*) root->data;
+  saveQueueOfStations(fp,station);
+
+  saveAllQueueInOrder(root->right,fp);
+}
+int saveLinesOfCars(TreeNode* root, const char* fileNmae){
+  FILE*fp = fopen(fileNmae,"w");
+  if(!fp) return 0;
+
+  fprintf(fp,"License,StationID\n");
+  saveAllQueueInOrder(root,fp);
+  fclose(fp);
+  return 1;
+}
+
+int updateFiles(SystemData* sys){
+  if(!sys) return 0;
+  saveStationToFile(sys->stationTree.root,"data/Stations.txt");
+  saveCarToFile(sys->carTree.root,"data/Cars.txt",&sys->stationTree);
+  savePortsToFile(sys->stationTree.root,"data/Ports.txt");
+  saveLinesOfCars(sys->stationTree.root,"data/LineOfCars.txt");
+
+  return 1;
 }

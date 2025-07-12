@@ -54,6 +54,6 @@ int loadLineOfCars(SystemData *sys);
 void* stationParser(const char* line);
 
 // update files
-SystemData *updateFiles();
+int updateFiles(SystemData* sys);
 
 #endif

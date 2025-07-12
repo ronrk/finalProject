@@ -38,6 +38,9 @@ static void displayMenu(){
       "*92. Test Charge Car\n"
       "*93. Test Stop Charge\n"
       "*94. Test Add new port\n"
+      "*95. Test Remove out of order ports\n"
+      "*96. Test Remove customer\n"
+      "*97. Test Close Station\n"
       "*99. Test all features\n"
       "*0. Exit\n"
       "********************************\n");
@@ -283,11 +286,13 @@ static void yesOrNoInput(char* input){
       return;
     }
 
-    if(strcmp("y",buffer) != 0 && strcmp("Y",buffer) != 0 || strcmp("n",buffer) != 0 && strcmp("N",buffer) != 0) {
+    if(strcmp(buffer, "y") == 0 || strcmp(buffer,"Y") == 0 || strcmp(buffer,"n") == 0 || strcmp(buffer,"N") == 0) {
       *input = buffer[0];
       return;
     }
+
     printf("Invalid input\n");
+
   }
   
 }
@@ -311,12 +316,14 @@ void mainMenu(SystemData* sys) {
         break;
       case 2:
         chargeCar(&sys->stationTree,&sys->carTree);
+        updateFiles(sys);
         break;
       case 3:
         checkCarStatus(&sys->carTree, &sys->stationTree);
         break;
       case 4:
         stopCharge(&sys->stationTree,&sys->carTree);
+        updateFiles(sys);
         break;
       case 5:
         dispAllSt(&sys->stationTree);
@@ -332,18 +339,23 @@ void mainMenu(SystemData* sys) {
         break;
       case 9:
         addNewPort(&sys->stationTree);
+        updateFiles(sys);
         break;
       case 10:
         releasePorts(&sys->stationTree);
+        updateFiles(sys);
         break;
       case 11:
         removeOutOrderPort(&sys->stationTree);
+        updateFiles(sys);
         break;
       case 12:
         remCustomer(&sys->carTree);
+        updateFiles(sys);
         break;
       case 13:
         closeSt(&sys->stationTree);
+        updateFiles(sys);
         break;
       case 91:
         test_locateNearSt_feature(sys);
@@ -357,10 +369,20 @@ void mainMenu(SystemData* sys) {
       case 94:
       test_addNewPort_feature(sys);
         break;
+      case 95:
+      test_removeOutOrderPort_feature(sys);
+        break;
+      case 96:
+      test_remCustomer_feature(sys);
+        break;
+      case 97:
+      test_closeSt_feature(sys);
+        break;
       case 99:
       test_runAllTests(sys);
         break;
       case 0:
+      updateFiles(sys);
         printf("Exiting system...\n");
         break;
       default:
@@ -859,52 +881,49 @@ void releasePorts(BinaryTree* stationTree){
 
 // 11.Remove Out Of Order Ports
 void removeOutOrderPort(BinaryTree* stationTree){
+  if(!stationTree||!stationTree->root){
+    displayError(UI_WARNING,"No stations load\n");
+  }
   Station* station = getStationFromUser(stationTree);
-  if(!station){
+  if(!station||!station->portsList){
+    printf("No available ports in the station\n");
     return;
   }
-  if(!station->portsList) {
-    return;
-  }
-  Port* current = station->portsList;
+
+  printf("Choose port num to remove: \n");
   int found = 0;
-  printf("Choose port num: \n");
+  Port* current = station->portsList;
   while (current)
   {
-    int portNum = getOutOrderPortNum(current);
-    if(portNum != -1) {
-      printf("#%d\n",portNum);
+    if(current->status == OOD) {
+      printf("#%d\n",current->num);
       found ++;
     }
     current = current->next;
   }
+
   if(found ==0){
-    printf("No Out of order ports at station : %s\n",station->name);
+    printf("No Out of order ports at station %s\n",station->name);
     return;
   }
+
   Port *portToRemove = getOODPortNumFromUser(station->portsList);
 
   if(!portToRemove) {
+    printf("Cancled\n");
     return;
   }
+
   printPort(portToRemove);
-  printf("Are you sure you want to remove this port?\n");
+
+
   char choice;
   yesOrNoInput(&choice);
-  switch (choice)
-  {
-  case 'y':
-  case 'Y':
+  if(choice == 'y' || choice == 'Y') {
     removePortFromStation(station,portToRemove->num);
-    printf("Port removed.");
-    /* code */
-    break;
-  case 'n':
-  case 'N':
-    printf("Dont Remove");
-    break;
-  default:
-    break;
+    printf("Port removed\n");
+  } else {
+    printf("Cancled, port not removed\n");
   }
 
   printf("\n=== Remove Out-Of-Order Port ===\n");
@@ -912,10 +931,75 @@ void removeOutOrderPort(BinaryTree* stationTree){
 
 // 12.Remove Customer
 void remCustomer(BinaryTree* carTree){
+  char license[100];
+  if(!getLicenseFromUser(license,sizeof(license))){
+    printf("Cancled\n");
+    return;
+  }
+
+  Car* car =  searchCar(carTree,license);
+  if(!car) {
+    return;
+  }
+
+
+  if(!car) {
+
+  }
+  if(car->inqueue == 1 || car->pPort !=NULL) {
+    if(car->pPort) {
+      printf("Car license %s currently charging on port #%d\ncant remove customer\n",car->nLicense,car->pPort->num);
+    } else {
+      printf("Car license %s currently waiting in queue, can't remove customer\n",car->nLicense);
+    }
+    return;
+  }
+
+  char choise;
+  int result;
+  yesOrNoInput(&choise);
+
+  if(choise == 'y' || choise == 'Y') {
+    result = deleteBST(carTree,license);
+    if(result == 0) {
+      displayError(UI_WARNING,"Error Removing Customer");
+      return;
+    }
+    printf("Car licese %s removed\n",license);
+  }
+  if(choise == 'n'|| choise == 'N') {
+    printf("Canceled, car license %s no removed\n",license);
+  }
+
   printf("\n=== Remove Customer ===\n");
 }
 
 // 13.Close Station
 void closeSt(BinaryTree* stationTree){
+  Station* station = getStationFromUser(stationTree);
+  if(!station) {
+    printf("Cancled\n");
+    return;
+  }
+
+  printStation(station);
+  char choice ;
+  int result = 0;
+  yesOrNoInput(&choice);
+
+  if(choice == 'y'||choice == 'Y') {
+    result = deleteBST(stationTree,station);
+    if(result == 0) {
+      char msg[128];
+      snprintf(msg,sizeof(msg),"Error deleting station %s [#%d]",station->name,station->id);
+      displayError(UI_WARNING,msg);
+      return;
+    }
+    printf("station removed\n");
+  } 
+  if(choice == 'n'|| choice=='N') {
+    printf("Cancled, station dont removed\n");
+  }
+
   printf("\n=== Close Station ===\n");
 }

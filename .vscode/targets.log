@@ -6,8 +6,11 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # PARTICULAR PURPOSE.
 
 # This program built for i386-apple-darwin11.3.0
+ 
+make: *** No rule to make target `all'.  Stop.
 
-# Make data base, printed on Wed Jul  9 22:49:44 2025
+
+# Make data base, printed on Sat Jul 12 03:03:53 2025
 
 # Variables
 
@@ -24,6 +27,7 @@ VSCODE_CRASH_REPORTER_PROCESS_TYPE = extensionHost
 # automatic
 @F = $(notdir $@)
 # makefile
+ 
 CURDIR := /Users/ronrock/Documents/לימודים/שנה א/סמסטר ב/c/עבודת סוף שפת סי/finalProject
 # makefile
 SHELL = /bin/sh
@@ -130,7 +134,7 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 91921
+VSCODE_PID = 2003
 # variable set hash-table stats:
 # Load=60/1024=6%, Rehash=0, Collisions=1/80=1%
 
@@ -174,6 +178,7 @@ Makefile:
 #  Failed to be updated.
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+ 
 
 # Not a target:
 makefile:
@@ -214,8 +219,6 @@ GNUmakefile:
 # strcache size: total = 0 / max = 0 / min = 4096 / avg = 0
 # strcache free: total = 0 / max = 0 / min = 4096 / avg = 0
 
-# Finished Make data base on Wed Jul  9 22:49:44 2025
+# Finished Make data base on Sat Jul 12 03:03:53 2025
 
  
-make: *** No rule to make target `all'.  Stop.
-

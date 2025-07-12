@@ -80,12 +80,19 @@ int countNodes(TreeNode *root) {
 void destroyTree(TreeNode *root,FreeFunc destroy) {
   if(root == NULL) return;
 
+  // printf("[DEBUG] visiting node: %p\n", (void*)root);
+  // printf("[DEBUG] root->left: %p, root->right: %p\n", (void*)root->left, (void*)root->right);
+
   destroyTree(root->left,destroy); // left
+
   destroyTree(root->right,destroy); // right
 
   if(destroy) 
+    // printf("[DEBUG] destroying car\n");
     destroy(root->data);
 
+
+  // printf("[DEBUG] freeing node\n");
   free(root);
 }
 
@@ -127,5 +134,50 @@ void* findMaxData(TreeNode* root, CompareFunc cmp) {
   }
 
   return maxData;
+}
+
+TreeNode* deleteNode(TreeNode* root, const void* key,CompareFunc cmp,FreeFunc destroy){
+  if(!root) return NULL;
+  int res = cmp(key,root->data);
+
+  if(res < 0) {
+    root->left = deleteNode(root->left,key,cmp,destroy);
+  } else if (res > 0) {
+    root->right = deleteNode(root->right,key,cmp,destroy);
+  } else {
+    // FOUND NODE TO REMOVE
+    // node with 1 children or no children
+    if(!root->left){
+      TreeNode* tmp = root->right;
+      if(destroy) destroy(root->data);
+      free(root);
+      return tmp;
+    }
+
+    // node with 2 children
+    TreeNode* succ = root->right;
+    while (succ->left)
+    {
+      succ = succ->left;
+    }
+
+    // copy data into current
+    void* tmpData = root->data;
+    root->data = succ->data;
+    succ->data = tmpData;
+
+    root->right = deleteNode(root->right,succ->data,cmp,destroy);
+    
+
+  }
+
+  return root;
+}
+
+int deleteBST(BinaryTree* tree,const void* key){
+  if(!tree || !tree->root) return 0;
+
+  tree->root = deleteNode(tree->root,key,tree->cmp,tree->destroy);
+  return 1;
 }
 

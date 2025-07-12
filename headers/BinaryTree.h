@@ -53,6 +53,9 @@ void inorderBST(BinaryTree *tree, void (*printFunc)(const void *));
 // find maximum node with custom cmp function
 void* findMaxData(TreeNode* root, CompareFunc cmp);
 // 
+// Remove Node from tree
+int deleteBST(BinaryTree* tree,const void* key);
+// 
 
 
 #endif // BINARYTREE_H
