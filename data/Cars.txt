@@ -1,4 +1,5 @@
 License,PortType,TotalPayed,StationID,PortNumber,InQueue
+12345678,FAST,0.00,0,0,1
 20053042,SLOW,17.11,0,0,0
 21339412,MID,111.26,0,0,0
 21794617,MID,19.38,0,0,0
